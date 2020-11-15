@@ -13,16 +13,21 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
-# from flask_wtf import FlaskForm
-# from flask_bootstrap import Bootstrap
-# from wtforms import StringField, PasswordField, BooleanField
-# from wtforms.validators import InputRequired, Email, Length
+from flask_bootstrap import Bootstrap
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, BooleanField
+from wtforms.validators import InputRequired, Email, Length
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
+app.config['SECRET_KEY'] = os.urandom(24)
+Bootstrap(app)
 
+class LoginForm(FlaskForm):
+  username = StringField('username', validators=[InputRequired()])
+  password = PasswordField('password', validators=[InputRequired()])
+  remember = BooleanField('remember me')
 
-#
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
 # XXX: The URI should be in the format of: 
@@ -164,13 +169,14 @@ def index():
 #
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+  form = LoginForm()
   error = None
   if request.method == 'POST':
       if request.form['username'] != 'admin' or request.form['password'] != 'admin':
           error = 'Invalid Credentials. Please try again.'
       else:
           return redirect(url_for('home'))
-  return render_template('login.html', error=error)
+  return render_template('login.html', error=error, form=form)
 
 # Example of adding new data to the database
 @app.route('/add', methods=['GET'])
