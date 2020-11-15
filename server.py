@@ -19,7 +19,7 @@ from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField
+from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField
 from wtforms.validators import InputRequired, Email, Length
 from flask_bootstrap import Bootstrap
 
@@ -200,19 +200,55 @@ def add():
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
-# @app.route('/login')
-# def login():
-#     abort(401)
-#     this_is_never_executed()
+
 class RegistrationForm(FlaskForm):
-  uname = StringField('uname', validators=[InputRequired()])
-  email = StringField('email', validators=[InputRequired()])
-  password = PasswordField('password', validators=[InputRequired()])
+  uname = StringField('Username', validators=[InputRequired()])
+  email = StringField('Email', validators=[InputRequired()])
+  password = PasswordField('Password', validators=[InputRequired()])
+
+  institution = SelectField('institution', choices=[(1,'University'),(0,'Organization')], coerce=int)
+  since = DateField('since')
+  position = StringField('Position')
+  iname = StringField('institution name', validators=[InputRequired()])
+  country = StringField('country', validators=[InputRequired()])
+  state = StringField('state')
+  zipcode = IntegerField('zipcode')
+  division = StringField('division')
+  department = StringField('department')
+  lab = StringField('lab')
+
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
   form = RegistrationForm()
   if form.validate_on_submit():
+    since = form.since.data
+    uname = form.uname.data
+    email = form.email.data
+    pwd = form.password.data
+    inst = form.institution.data
+    pos = form.position.data
+    iname = form.iname.data
+    coun = form.country.data
+    st = form.state.data
+    zcode = form.zipcode.data
+    div = form.division.data
+    dept = form.department.data
+    lab = form.lab.data
+
+    user = g.conn.execute('SELECT * FROM user_from WHERE uname=%s', uname).first()
+    e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
+    if user:
+      return '<h1> This username is already in use.</h1>'
+    if e:
+      return '<h1> This email is already registered.</h1>'
+
+    g.conn.execute('INSERT INTO institution(iname, country, state, zipcode) VALUES(%s, %s, %s, %s)',iname, coun, st, zcode)
+    g.conn.execute('INSERT INTO user_from(uname, email, password, since, position, iname, country) VALUES(%s, %s, %s, %s, %s, %s, %s)', uname, email, pwd, since, pos, iname, coun)
+    if inst == 1:
+      g.conn.execute('INSERT INTO university(iname, country, department, lab) VALUES(%s, %s, %s, %s)', iname, coun, dept, lab)
+    else:
+      g.conn.execute('INSERT INTO organisation(iname, country, division) VALUES(%s, %s, %s)',iname, coun, div)
     return 'You are registered!'
   return render_template('registration.html', form=form)
 

@@ -11,6 +11,22 @@
         {{ wtf.form_field(form.uname) }}
         {{ wtf.form_field(form.email) }}
         {{ wtf.form_field(form.password)}}
+        {{ wtf.form_field(form.institution) }}
+
+        {{ wtf.form_field(form.iname) }}
+        {{ wtf.form_field(form.position) }}
+        {{ wtf.form_field(form.state) }}
+        {{ wtf.form_field(form.zipcode) }}
+        {{ wtf.form_field(form.country) }}
+
+        <p>For University</p>
+        {{ wtf.form_field(form.department) }}
+        {{ wtf.form_field(form.lab) }}
+
+        <p>For Organization</p>
+        {{ wtf.form_field(form.division) }}
+
+        {{wtf.form_field(form.since)}}
         <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
     </form>
 </div>
