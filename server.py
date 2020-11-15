@@ -163,31 +163,30 @@ def login():
   return render_template("login.html")
 
 # Example of adding new data to the database
-# @app.route('/add', methods=['GET'])
+@app.route('/add', methods=['GET'])
+def add():
+  name = request.form['name']
+  g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
+  return redirect('/')
+
+# Users logging into the database
+# @app.route('/login/submit', methods=['GET'])
 # def add():
 #   name = request.form['name']
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
-# Users logging into the database
-@app.route('/login/submit', methods=['GET'])
-def add():
-  name = request.form['name']
-  g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
-  return redirect('/')
-
-# 
-@app.route('/login/add', methods=['GET'])
-def add():
-  name = request.form['name']
-  g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
-  return redirect('/')
+# # Searching for sequence and occurrence in database
+# @app.route('/add', methods=['POST'])
+# def add():
+#   name = request.form['name']
+#   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
+#   return redirect('/')
 
 # @app.route('/login')
 # def login():
 #     abort(401)
 #     this_is_never_executed()
-
 
 if __name__ == "__main__":
   import click
