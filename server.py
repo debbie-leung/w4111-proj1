@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, url_for
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
@@ -33,22 +33,11 @@ class LoginForm(FlaskForm):
   password = PasswordField('password', validators=[InputRequired()])
   remember = BooleanField('remember me')
 
-# The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
-#
-# XXX: The URI should be in the format of: 
-#
-#     postgresql://USER:PASSWORD@34.75.150.200/proj1part2
-#
-# For example, if you had username gravano and password foobar, then the following line would be:
-#
-#     DATABASEURI = "postgresql://gravano:foobar@34.75.150.200/proj1part2"
-#
 DATABASEURI = "postgresql://dsl2162:dsl2162zo2146@34.75.150.200/proj1part2"
 
 # This line creates a database engine that knows how to connect to the URI above.
 engine = create_engine(DATABASEURI)
 
-#
 # Example of running queries in your database
 # Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. This is only an example showing you how to run queries in your database using SQLAlchemy.
 #
@@ -85,8 +74,6 @@ def teardown_request(exception):
   except Exception as e:
     pass
 
-
-#
 # @app.route is a decorator around index() that means:
 #   run index() whenever the user tries to access the "/" path using a GET request
 #
@@ -98,7 +85,6 @@ def teardown_request(exception):
 # 
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-#
 @app.route('/')
 def index():
   """
@@ -114,15 +100,12 @@ def index():
   # DEBUG: this is debugging code to see what request looks like
   print(request.args)
 
-
-  #
   # example of a database query
-  #
-  cursor = g.conn.execute("SELECT name FROM test")
-  names = []
-  for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
-  cursor.close()
+  # cursor = g.conn.execute("SELECT name FROM test")
+  # names = []
+  # for result in cursor:
+  #   names.append(result['name'])  # can also be accessed using result[0]
+  # cursor.close()
 
   #
   # Flask uses Jinja templates, which is an extension to HTML where you can
@@ -152,26 +135,30 @@ def index():
   #
   # context = dict(data = names)
 
-
-  #
   # render_template looks in the templates/ folder for files.
   # for example, the below file reads template/index.html
   #
   # return render_template("index.html", **context)
   return render_template("index.html")
 
-#
 # This is an example of a different path.  You can see it at:
 # 
 #     localhost:8111/another
 #
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
-#
 @app.route('/login', methods=['GET', 'POST'])
 def login():
   form = LoginForm()
-  return render_template('login.html', error=error, form=form)
+  if form.validate_on_submit():
+    uid = form.username.data
+    pwd = form.password.data
+    user = g.conn.execute('SELECT * FROM User_From WHERE uname=%s', uid).first()
+    if user:
+      if user.password == pwd:
+        return '<h1> Success </h1>'
+    return '<h1> Invalid username or password </h1>'
+  return render_template('login.html', form=form)
 
 # Example of adding new data to the database
 @app.route('/add', methods=['GET'])
@@ -198,6 +185,7 @@ def add():
 # def login():
 #     abort(401)
 #     this_is_never_executed()
+
 class RegistrationForm(FlaskForm):
   uname = StringField('uname', validators=[InputRequired()])
   email = StringField('email', validators=[InputRequired()])
