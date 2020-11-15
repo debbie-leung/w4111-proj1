@@ -14,10 +14,13 @@ from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
 
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, BooleanField
+from wtforms.validators import InputRequired, Email, Length
+
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-#just testing sth
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -187,6 +190,17 @@ def add():
 # def login():
 #     abort(401)
 #     this_is_never_executed()
+class RegistrationForm(FlaskForm):
+  uname = StringField('uname', validators=[InputRequired()])
+  email = StringField('email', validators=[InputRequired(), Email('Invalid Email')])
+  password = PasswordField('password', validators=[InputRequired()])
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+  form = RegistrationForm(request.form)
+  if request.method == 'POST' and form.validate_on_submit():
+    return 'You are registered!'
+  return render_template('registration.html', form=form)
 
 if __name__ == "__main__":
   import click
