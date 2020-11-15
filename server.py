@@ -18,6 +18,11 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
 
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, BooleanField
+from wtforms.validators import InputRequired, Email, Length
+from flask_bootstrap import Bootstrap
+
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -40,10 +45,7 @@ class LoginForm(FlaskForm):
 #
 DATABASEURI = "postgresql://dsl2162:dsl2162zo2146@34.75.150.200/proj1part2"
 
-
-#
 # This line creates a database engine that knows how to connect to the URI above.
-#
 engine = create_engine(DATABASEURI)
 
 #
@@ -55,7 +57,6 @@ engine = create_engine(DATABASEURI)
 #   name text
 # );""")
 # engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
-
 
 @app.before_request
 def before_request():
@@ -203,6 +204,17 @@ def add():
 # def login():
 #     abort(401)
 #     this_is_never_executed()
+class RegistrationForm(FlaskForm):
+  uname = StringField('uname', validators=[InputRequired()])
+  email = StringField('email', validators=[InputRequired()])
+  password = PasswordField('password', validators=[InputRequired()])
+
+@app.route("/registration", methods=['GET', 'POST'])
+def register():
+  form = RegistrationForm()
+  if form.validate_on_submit():
+    return 'You are registered!'
+  return render_template('registration.html', form=form)
 
 if __name__ == "__main__":
   import click
