@@ -7,12 +7,12 @@
 <div class="container">
     <h3>Registration</h3>
     <p>Please fill the form to create a new account.</p>
-    <form action="" class="form" method="post">
-        {{ wtf.form.hidden_tag() }}
-        {{ wtf.form_field(form.uname), placeholder='User Name' }}
-        {{ wtf.form_field(form.email), placeholder='Email' }}
-        {{ wtf.form_field(form.password), placeholder='Password' }}
-        <button class="btn btn-primary" type="submit">Submit</button>
+    <form action="/registration" class="form" method="post">
+        {{ form.hidden_tag() }}
+        {{ wtf.form_field(form.uname) }}
+        {{ wtf.form_field(form.email) }}
+        {{ wtf.form_field(form.password)}}
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
     </form>
 </div>
 {% endblock %}

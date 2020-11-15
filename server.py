@@ -36,7 +36,7 @@ Bootstrap(app)
 #
 DATABASEURI = "postgresql://dsl2162:dsl2162zo2146@34.75.150.200/proj1part2"
 
-
+app.config['SECRET_KEY'] = os.urandom(24)
 #
 # This line creates a database engine that knows how to connect to the URI above.
 #
@@ -194,13 +194,13 @@ def add():
 #     this_is_never_executed()
 class RegistrationForm(FlaskForm):
   uname = StringField('uname', validators=[InputRequired()])
-  email = StringField('email', validators=[InputRequired(), Email('Invalid Email')])
+  email = StringField('email', validators=[InputRequired()])
   password = PasswordField('password', validators=[InputRequired()])
 
-@app.route("/register", methods=['GET', 'POST'])
+@app.route("/registration", methods=['GET', 'POST'])
 def register():
-  form = RegistrationForm(request.form)
-  if request.method == 'POST' and form.validate_on_submit():
+  form = RegistrationForm()
+  if form.validate_on_submit():
     return 'You are registered!'
   return render_template('registration.html', form=form)
 
