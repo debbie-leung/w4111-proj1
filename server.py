@@ -13,6 +13,10 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
+# from flask_wtf import FlaskForm
+# from flask_bootstrap import Bootstrap
+# from wtforms import StringField, PasswordField, BooleanField
+# from wtforms.validators import InputRequired, Email, Length
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -158,9 +162,15 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-  return render_template("login.html")
+  error = None
+  if request.method == 'POST':
+      if request.form['username'] != 'admin' or request.form['password'] != 'admin':
+          error = 'Invalid Credentials. Please try again.'
+      else:
+          return redirect(url_for('home'))
+  return render_template('login.html', error=error)
 
 # Example of adding new data to the database
 @app.route('/add', methods=['GET'])
