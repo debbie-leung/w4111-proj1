@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, url_for
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
@@ -20,7 +20,7 @@ from wtforms.validators import InputRequired, Email, Length
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField
-from wtforms.validators import InputRequired, Email, Length
+from wtforms.validators import InputRequired, Email, Length, NumberRange
 from flask_bootstrap import Bootstrap
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -133,14 +133,14 @@ def index():
   # You can see an example template in templates/index.html
   #
   # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
+  # for example, "data" key in the context variable defined below will be
   # accessible as a variable in index.html:
   #
   #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
   #     <div>{{data}}</div>
-  #     
+  #
   #     # creates a <div> tag for each element in data
-  #     # will print: 
+  #     # will print:
   #     #
   #     #   <div>grace hopper</div>
   #     #   <div>alan turing</div>
@@ -202,24 +202,24 @@ def add():
 
 
 class RegistrationForm(FlaskForm):
-  uname = StringField('Username', validators=[InputRequired()])
-  email = StringField('Email', validators=[InputRequired()])
-  password = PasswordField('Password', validators=[InputRequired()])
-
+  uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
+  email = StringField('Email', validators=[InputRequired(), Email(), Length(max=50)])
+  password = PasswordField('Password', validators=[InputRequired(), Length(max=20)])
   institution = SelectField('institution', choices=[(1,'University'),(0,'Organization')], coerce=int)
   since = DateField('since')
-  position = StringField('Position')
-  iname = StringField('institution name', validators=[InputRequired()])
-  country = StringField('country', validators=[InputRequired()])
-  state = StringField('state')
-  zipcode = IntegerField('zipcode')
-  division = StringField('division')
-  department = StringField('department')
-  lab = StringField('lab')
+  position = StringField('Position', validators=[Length(max=20)])
+  iname = StringField('institution name', validators=[InputRequired(),Length(max=50)])
+  country = StringField('country', validators=[InputRequired(), Length(max=20)])
+  state = StringField('state', validators=[Length(max=20)])
+  zipcode = IntegerField('zipcode', validators=[NumberRange(min=9999, max=99999)])
+  division = StringField('division', validators=[Length(max=20)])
+  department = StringField('department', validators=[Length(max=20)])
+  lab = StringField('lab', validators=[Length(max=20)])
 
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
+  error = None
   form = RegistrationForm()
   if form.validate_on_submit():
     since = form.since.data
@@ -239,9 +239,11 @@ def register():
     user = g.conn.execute('SELECT * FROM user_from WHERE uname=%s', uname).first()
     e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
     if user:
-      return '<h1> This username is already in use.</h1>'
+      error = '<h1> This username is already in use.</h1>'
+      return render_template('registration.html', error=error, form=form)
     if e:
-      return '<h1> This email is already registered.</h1>'
+      error = '<h1> This email is already registered.</h1>'
+      return render_template('registration.html', error=error, form=form)
 
     g.conn.execute('INSERT INTO institution(iname, country, state, zipcode) VALUES(%s, %s, %s, %s)',iname, coun, st, zcode)
     g.conn.execute('INSERT INTO user_from(uname, email, password, since, position, iname, country) VALUES(%s, %s, %s, %s, %s, %s, %s)', uname, email, pwd, since, pos, iname, coun)
@@ -249,8 +251,8 @@ def register():
       g.conn.execute('INSERT INTO university(iname, country, department, lab) VALUES(%s, %s, %s, %s)', iname, coun, dept, lab)
     else:
       g.conn.execute('INSERT INTO organisation(iname, country, division) VALUES(%s, %s, %s)',iname, coun, div)
-    return 'You are registered!'
-  return render_template('registration.html', form=form)
+    return redirect(url_for('home'))
+  return render_template('registration.html', error=error, form=form)
 
 if __name__ == "__main__":
   import click
