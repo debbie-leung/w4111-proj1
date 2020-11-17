@@ -2,14 +2,56 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block content %}
+<head>
+    <style> table, tr, td, th { border: 1px solid black;
+    padding : 8px;}
+    </style>
+</head>
 <div class="container">
     <h2>Search Results</h2>
 
-    {% if otbl %}
-      <p>{{otbl}}</p>
-    {% endif %}
-    {% if stbl %}
-      <p>{{stbl}}</p>
-    {% endif %}
+    <table style="width:50%"><caption>Occurrence Data</caption>
+        <thead>
+            <tr><th>Time</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+                <th>Genus</th>
+                <th>Species</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if otbl %}
+            {% for item in otbl %}
+            <tr>{% for elem in item %}
+                <td>{{elem}}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+    <table><caption>Sequence Data</caption>
+        <thead>
+            <tr><th>Type</th>
+                <th>BP</th>
+                <th>Sequence</th>
+                <th>Accession_No</th>
+                <th>Date</th>
+                <th>DOI</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if stbl %}
+            {% for item in stbl%}
+            <tr>{% for elem in item%}
+                <td>{{elem}}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

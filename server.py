@@ -268,28 +268,38 @@ def homesearch():
     seq = request.form['sequence']
     occ = int(occ)
     seq = int(seq)
-    print(occ)
+    stbl = []
+    has = []
+    otbl = []
 
-    if occ and seq:
-      print("h")
-      has = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s).first()
-      stbl = g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', has).first()
-      otbl = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s).first()
+    if (occ and seq) or (not occ and not seq):
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s)
+      for n in cursor:
+        has.append(n)
+      cursor.close()
+      for no in has:
+        stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s)
+      for n in cursor:
+        otbl.append(n)
+      cursor.close()
       return render_template('search.html', stbl=stbl, otbl=otbl)
+
     elif occ:
-      print("e")
-      otbl = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s).first()
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s)
+      for n in cursor:
+        otbl.append(n)
+      cursor.close()
       return render_template('search.html', otbl=otbl)
+
     elif seq:
-      print("y")
-      has = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s).first()
-      stbl = g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', has).first()
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s)
+      for n in cursor:
+        has.append(n)
+      cursor.close()
+      for no in has:
+        stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
       return render_template('search.html', stbl=stbl)
-    else:
-      has = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s).first()
-      stbl = g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', has).first()
-      otbl = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s).first()
-      return render_template('search.html', stbl=stbl, otbl=otbl)
 
   return redirect('index.html')
 
