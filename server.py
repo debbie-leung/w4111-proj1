@@ -260,6 +260,10 @@ class HomeSearchForm(FlaskForm):
   seq = BooleanField('sequence', default="checked")
   species = StringField('species', validators=[Length(max=20)])
 
+@app.route('/onereference', methods=['GET', 'POST'])
+def onereference():
+  return redirect('/')
+
 @app.route('/homesearch', methods=['GET', 'POST'])
 def homesearch():
   if request.method == 'POST':
@@ -301,7 +305,7 @@ def homesearch():
         stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
       return render_template('search.html', stbl=stbl)
 
-  return redirect('index.html')
+  return redirect('/')
 
 class SearchForm(FlaskForm):
   pass
