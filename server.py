@@ -99,6 +99,7 @@ def teardown_request(exception):
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
+
 @app.route('/')
 def index():
   """
@@ -253,6 +254,47 @@ def register():
       g.conn.execute('INSERT INTO organisation(iname, country, division) VALUES(%s, %s, %s)',iname, coun, div)
     return redirect(url_for('home'))
   return render_template('registration.html', error=error, form=form)
+
+class HomeSearchForm(FlaskForm):
+  occ = BooleanField('occurance', default="checked")
+  seq = BooleanField('sequence', default="checked")
+  species = StringField('species', validators=[Length(max=20)])
+
+@app.route('/homesearch', methods=['GET', 'POST'])
+def homesearch():
+  if request.method == 'POST':
+    s = request.form['species']
+    occ = request.form['occurrence']
+    seq = request.form['sequence']
+    occ = int(occ)
+    seq = int(seq)
+    print(occ)
+
+    if occ and seq:
+      print("h")
+      has = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s).first()
+      stbl = g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', has).first()
+      otbl = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s).first()
+      return render_template('search.html', stbl=stbl, otbl=otbl)
+    elif occ:
+      print("e")
+      otbl = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s).first()
+      return render_template('search.html', otbl=otbl)
+    elif seq:
+      print("y")
+      has = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s).first()
+      stbl = g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', has).first()
+      return render_template('search.html', stbl=stbl)
+    else:
+      has = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s).first()
+      stbl = g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', has).first()
+      otbl = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s).first()
+      return render_template('search.html', stbl=stbl, otbl=otbl)
+
+  return redirect('index.html')
+
+class SearchForm(FlaskForm):
+  pass
 
 if __name__ == "__main__":
   import click

@@ -1,0 +1,15 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block content %}
+<div class="container">
+    <h2>Search Results</h2>
+
+    {% if otbl %}
+      <p>{{otbl}}</p>
+    {% endif %}
+    {% if stbl %}
+      <p>{{stbl}}</p>
+    {% endif %}
+</div>
+{% endblock %}
