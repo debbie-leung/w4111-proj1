@@ -19,7 +19,7 @@ from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField
+from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField, SelectMultipleField
 from wtforms.validators import InputRequired, Email, Length, NumberRange
 from flask_bootstrap import Bootstrap
 
@@ -237,11 +237,6 @@ def register():
     return redirect(url_for('home'))
   return render_template('registration.html', error=error, form=form)
 
-class HomeSearchForm(FlaskForm):
-  occ = BooleanField('occurance', default="checked")
-  seq = BooleanField('sequence', default="checked")
-  species = StringField('species', validators=[Length(max=20)])
-
 @app.route('/onereference', methods=['GET', 'POST'])
 def onereference():
   return redirect('/')
@@ -249,7 +244,10 @@ def onereference():
 @app.route('/homesearch', methods=['GET', 'POST'])
 def homesearch():
   if request.method == 'POST':
-    s = request.form['species']
+    gs = (request.form['genusspecies'])
+    gs = gs.split()
+    gen = gs[0]
+    s = gs[1]
     occ = request.form['occurrence']
     seq = request.form['sequence']
     occ = int(occ)
@@ -259,38 +257,399 @@ def homesearch():
     otbl = []
 
     if (occ and seq) or (not occ and not seq):
-      cursor = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s)
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         has.append(n)
       cursor.close()
       for no in has:
-        stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
-      cursor = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s)
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)', no[0]).first()
+        cursor = g.conn.execute('SELECT * FROM sequence_source n, reference r WHERE n.accession_no=(%s) and r.doi=(%s)', no[0], ref[0])
+        val = cursor.first()
+        stbl += [val]
+        cursor.close()
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         otbl.append(n)
       cursor.close()
       return render_template('search.html', stbl=stbl, otbl=otbl)
 
     elif occ:
-      cursor = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s)
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         otbl.append(n)
       cursor.close()
       return render_template('search.html', otbl=otbl)
 
     elif seq:
-      cursor = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s)
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         has.append(n)
       cursor.close()
       for no in has:
-        stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)', no[0]).first()
+        cursor = g.conn.execute('SELECT * FROM sequence_source n, reference r WHERE n.accession_no=(%s) and r.doi=(%s)',
+                                no[0], ref[0])
+        val = cursor.first()
+        stbl += [val]
+        cursor.close()
       return render_template('search.html', stbl=stbl)
 
   return redirect('/')
 
 class SearchForm(FlaskForm):
-  pass
+  org = BooleanField("Organism")
+  king = BooleanField('Kingdom')
+  kings = SelectField('Kingdom Selection')
+  phy = BooleanField('Phylum')
+  phys = SelectField('Phylum Selection')
+  cl = BooleanField('Class')
+  cls = SelectField('Class Selection')
+  ord = BooleanField('Orders')
+  ords = SelectField('Orders Selection')
+  fam = BooleanField('Family')
+  fams = SelectField('Family Selection')
+  gen = BooleanField('Genus')
+  gens = SelectField('Genus Selection')
+  spe = BooleanField('Species')
+  spes = SelectField('Species Selection')
+  seq = BooleanField('Sequence')
+
+  sty = BooleanField('Sequence Type')
+  stys = SelectField('Sequence Type Selection')
+  bp = BooleanField('BP')
+  bps = SelectField('BP Selection')
+  occ = BooleanField('Occurrence')
+
+  oty = BooleanField('Occurence Type')
+  otys = SelectField('Occurrence Type Selection')
+  loc = BooleanField('Location')
+  locs = SelectField('Location Selection')
+
+@app.route('/advancesearch', methods=['GET', 'POST'])
+def advancesearch():
+  error = None
+  form = SearchForm()
+  form.kings.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (kingdom) kingdom FROM organism')]
+  form.phys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (phylum) phylum FROM organism')]
+  form.cls.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (class) class FROM organism')]
+  form.ords.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (orders) orders FROM organism')]
+  form.fams.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (family) family FROM organism')]
+  form.gens.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (genus) genus FROM organism')]
+  form.spes.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (species) species FROM organism')]
+  form.stys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (type) type FROM sequence_source')]
+  form.bps.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (bp) bp FROM sequence_source')]
+  form.otys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (type) type FROM occ_records')]
+  form.locs.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (location) location FROM occ_records')]
+  
+  if form.validate_on_submit():
+    t=[]
+    stbl = []
+    otbl = []
+    if form.org.data == True:
+      if form.king.data == True:
+        cursor = g.conn.execute('SELECT genus, species FROM organism WHERE kingdom=(%s)', form.kings.data)
+        for x in cursor:
+          if form.occ.data == True:
+            if form.oty.data == True and form.loc.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+                x[0], x[1], form.otys.data, form.locs.data)
+            elif form.oty.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                x[0], x[1], form.otys.data)
+            elif form.loc.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s)',
+                x[0], x[1], form.locs.data)
+            else:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', x[0], x[1])
+          if form.seq.data == True:
+            if form.sty.data == True and form.bp.data == True:
+              t += g.conn.execute('SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s) and bp=(%s)',
+                                  x[0], x[1], form.stys.data, form.bps.data)
+            elif form.sty.data == True:
+              t += g.conn.execute('SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                  x[0], x[1], form.stys.data)
+            elif form.bp.data == True:
+              t += g.conn.execute('SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and bp=(%s)',
+                                  x[0], x[1], form.bps.data)
+            else:
+              t += g.conn.execute('SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s)', x[0], x[1])
+        cursor.close()
+        for n in t:
+          stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', n).first()]
+
+      if form.phy.data == True:
+        cursor = g.conn.execute('SELECT genus, species FROM organism WHERE phylum=(%s)', form.phys.data)
+        for x in cursor:
+          if form.occ.data == True:
+            if form.oty.data == True and form.loc.data == True:
+              otbl += g.conn.execute(
+                'SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+                x[0], x[1], form.otys.data, form.locs.data)
+            elif form.oty.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                     x[0], x[1], form.otys.data)
+            elif form.loc.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s)',
+                                     x[0], x[1], form.locs.data)
+            else:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', x[0], x[1])
+          if form.seq.data == True:
+            if form.sty.data == True and form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s) and bp=(%s)',
+                x[0], x[1], form.stys.data, form.bps.data)
+            elif form.sty.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s)',
+                x[0], x[1], form.stys.data)
+            elif form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and bp=(%s)',
+                x[0], x[1], form.bps.data)
+            else:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s)', x[0], x[1])
+        cursor.close()
+        for n in t:
+          stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', n).first()]
+
+      if form.cl.data == True:
+        cursor = g.conn.execute('SELECT genus, species FROM organism WHERE class=(%s)', form.cls.data)
+        for x in cursor:
+          if form.occ.data == True:
+            if form.oty.data == True and form.loc.data == True:
+              otbl += g.conn.execute(
+                'SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+                x[0], x[1], form.otys.data, form.locs.data)
+            elif form.oty.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                     x[0], x[1], form.otys.data)
+            elif form.loc.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s)',
+                                     x[0], x[1], form.locs.data)
+            else:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', x[0], x[1])
+          if form.seq.data == True:
+            if form.sty.data == True and form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s) and bp=(%s)',
+                x[0], x[1], form.stys.data, form.bps.data)
+            elif form.sty.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s)',
+                x[0], x[1], form.stys.data)
+            elif form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and bp=(%s)',
+                x[0], x[1], form.bps.data)
+            else:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s)', x[0], x[1])
+        cursor.close()
+        for n in t:
+          stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', n).first()]
+
+      if form.ord.data == True:
+        cursor = g.conn.execute('SELECT genus, species FROM organism WHERE orders=(%s)', form.ords.data)
+        for x in cursor:
+          if form.occ.data == True:
+            if form.oty.data == True and form.loc.data == True:
+              otbl += g.conn.execute(
+                'SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+                x[0], x[1], form.otys.data, form.locs.data)
+            elif form.oty.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                     x[0], x[1], form.otys.data)
+            elif form.loc.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s)',
+                                     x[0], x[1], form.locs.data)
+            else:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', x[0], x[1])
+          if form.seq.data == True:
+            if form.sty.data == True and form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s) and bp=(%s)',
+                x[0], x[1], form.stys.data, form.bps.data)
+            elif form.sty.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s)',
+                x[0], x[1], form.stys.data)
+            elif form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and bp=(%s)',
+                x[0], x[1], form.bps.data)
+            else:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s)', x[0], x[1])
+        cursor.close()
+        for n in t:
+          stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', n).first()]
+
+      if form.fam.data == True:
+        cursor = g.conn.execute('SELECT genus, species FROM organism WHERE family=(%s)', form.fams.data)
+        for x in cursor:
+          if form.occ.data == True:
+            if form.oty.data == True and form.loc.data == True:
+              otbl += g.conn.execute(
+                'SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+                x[0], x[1], form.otys.data, form.locs.data)
+            elif form.oty.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                     x[0], x[1], form.otys.data)
+            elif form.loc.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s)',
+                                     x[0], x[1], form.locs.data)
+            else:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', x[0], x[1])
+          if form.seq.data == True:
+            if form.sty.data == True and form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s) and bp=(%s)',
+                x[0], x[1], form.stys.data, form.bps.data)
+            elif form.sty.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s)',
+                x[0], x[1], form.stys.data)
+            elif form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and bp=(%s)',
+                x[0], x[1], form.bps.data)
+            else:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s)', x[0], x[1])
+        cursor.close()
+        for n in t:
+          stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', n).first()]
+
+      if form.gen.data == True:
+        cursor = g.conn.execute('SELECT genus, species FROM organism WHERE genus=(%s)', form.gens.data)
+        for x in cursor:
+          if form.occ.data == True:
+            if form.oty.data == True and form.loc.data == True:
+              otbl += g.conn.execute(
+                'SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+                x[0], x[1], form.otys.data, form.locs.data)
+            elif form.oty.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                     x[0], x[1], form.otys.data)
+            elif form.loc.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s)',
+                                     x[0], x[1], form.locs.data)
+            else:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', x[0], x[1])
+          if form.seq.data == True:
+            if form.sty.data == True and form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s) and bp=(%s)',
+                x[0], x[1], form.stys.data, form.bps.data)
+            elif form.sty.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s)',
+                x[0], x[1], form.stys.data)
+            elif form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and bp=(%s)',
+                x[0], x[1], form.bps.data)
+            else:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s)', x[0], x[1])
+        cursor.close()
+        for n in t:
+          stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', n).first()]
+
+      if form.spe.data == True:
+        cursor = g.conn.execute('SELECT genus, species FROM organism WHERE species=(%s)', form.spes.data)
+        for x in cursor:
+          if form.occ.data == True:
+            if form.oty.data == True and form.loc.data == True:
+              otbl += g.conn.execute(
+                'SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+                x[0], x[1], form.otys.data, form.locs.data)
+            elif form.oty.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                     x[0], x[1], form.otys.data)
+            elif form.loc.data == True:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s)',
+                                     x[0], x[1], form.locs.data)
+            else:
+              otbl += g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', x[0], x[1])
+          if form.seq.data == True:
+            if form.sty.data == True and form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s) and bp=(%s)',
+                x[0], x[1], form.stys.data, form.bps.data)
+            elif form.sty.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and type=(%s)',
+                x[0], x[1], form.stys.data)
+            elif form.bp.data == True:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s) and bp=(%s)',
+                x[0], x[1], form.bps.data)
+            else:
+              t += g.conn.execute(
+                'SELECT DISTINCT ON (accession_no) accession_no FROM has WHERE genus=(%s) and species=(%s)', x[0], x[1])
+        cursor.close()
+        for n in t:
+          stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', n).first()]
+
+    else:
+      if form.seq.data == True:
+        if form.sty.data == True and form.bp.data == True:
+          cursor = g.conn.execute('SELECT * FROM sequence_source WHERE type=(%s) and bp=(%s)', form.stys.data, form.bps.data)
+          for x in cursor:
+            stbl.append(x)
+          cursor.close()
+
+        elif form.sty.data == True:
+          cursor = g.conn.execute('SELECT * FROM sequence_source WHERE type=(%s)', form.stys.data)
+          for x in cursor:
+            stbl.append(x)
+          cursor.close()
+
+        elif form.bp.data == True:
+          cursor = g.conn.execute('SELECT * FROM sequence_source WHERE bp=(%s)', form.bps.data)
+          for x in cursor:
+            stbl.append(x)
+          cursor.close()
+
+        else:
+          cursor = g.conn.execute('SELECT * FROM sequence_source')
+          for x in cursor:
+            stbl.append(x)
+          cursor.close()
+
+      if form.occ.data == True:
+        if form.oty.data == True and form.loc.data == True:
+          cursor = g.conn.execute('SELECT * FROM occ_records WHERE type=(%s) and location=(%s)', form.otys.data,
+                                  form.locs.data)
+          for x in cursor:
+            otbl.append(x)
+          cursor.close()
+
+        elif form.oty.data == True:
+          cursor = g.conn.execute('SELECT * FROM occ_records WHERE type=(%s)', form.otys.data)
+          for x in cursor:
+            otbl.append(x)
+          cursor.close()
+
+        elif form.loc.data == True:
+          cursor = g.conn.execute('SELECT * FROM occ_records WHERE location=(%s)', form.locs.data)
+          for x in cursor:
+            otbl.append(x)
+          cursor.close()
+
+        else:
+          cursor = g.conn.execute('SELECT * FROM occ_records')
+          for x in cursor:
+            otbl.append(x)
+          cursor.close()
+
+    return render_template('search.html', stbl=stbl, otbl=otbl)
+
+
+  return render_template('advancesearch.html', error=error, form=form)
+
 
 if __name__ == "__main__":
   import click

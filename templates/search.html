@@ -26,6 +26,9 @@
 
 <div class="container">
     <h2>Search Results</h2>
+    {% if not (otbl and stbl) %}
+    <p>No occurrence or sequence related to this genus species</p>
+    {% endif%}
     {% if otbl %}
     <table style="width:50%"><caption>Occurrence Data</caption>
         <thead>
@@ -64,11 +67,8 @@
 
             {% for item in stbl%}
             <tr>{% for elem in item%}
-                {% if loop.last%}
-                <td><a href="/onereference">{{elem}}</a></td>
-                {% else %}
+
                 <td>{{elem}}</td>
-                {%endif%}
                 {% endfor %}
             </tr>
             {% endfor %}
