@@ -158,7 +158,7 @@ def login():
     user = g.conn.execute('SELECT * FROM User_From WHERE uname=%s', uid).first()
     if user:
       if user.password == pwd:
-        return '<h1> Success </h1>'
+        return redirect(url_for('dashboard'))
     return '<h1> Invalid username or password </h1>'
   return render_template('login.html', form=form)
 
@@ -182,7 +182,6 @@ def add():
 #   name = request.form['name']
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
-
 
 class RegistrationForm(FlaskForm):
   uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
@@ -241,6 +240,10 @@ class HomeSearchForm(FlaskForm):
   occ = BooleanField('occurance', default="checked")
   seq = BooleanField('sequence', default="checked")
   species = StringField('species', validators=[Length(max=20)])
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
 
 @app.route('/onereference', methods=['GET', 'POST'])
 def onereference():
