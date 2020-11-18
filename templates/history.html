@@ -1,4 +1,5 @@
 {% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 
 {% block title %}
 Dashboard
@@ -10,6 +11,12 @@ Dashboard
 {% endblock %}
 
 {% block content %}
+<head>
+    <style> table, tr, td, th { border: 1px solid black;
+    padding : 8px;}
+    </style>
+</head>
+
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container-fluid">
         <div class="navbar-header">
@@ -24,7 +31,7 @@ Dashboard
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
             <li><a href="#">Dashboard</a></li>
-            <li><a href="#">Settings</a></li>
+            <li><a href="#">Settings</a></li>s
             <li><a href="#">Profile</a></li>
             <li><a href="/">Log Out</a></li>
           </ul>
@@ -46,10 +53,25 @@ Dashboard
             </ul>
           </div>
           <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            {% if name %}
-            <h1 class="page-header">Welcome, {{name}}</h1>
-            {% endif %}
-          </div>
-        </div>
-    </div>
-{% endblock %} 
+                <h1 class="page-header">Search History</h1>
+                {% if hist %}
+                <table style="width:50%">
+                    <thead>
+                        <tr><th>Genus</th>
+                            <th>Species</th>
+                            <th>Access Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for item in hist %}
+                        <tr>{% for elem in item %}
+                            <td>{{elem}}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+{% endblock %}

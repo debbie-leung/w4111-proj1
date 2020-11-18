@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, url_for
+from flask import Flask, request, render_template, g, redirect, Response, url_for, session
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
@@ -32,6 +32,37 @@ class LoginForm(FlaskForm):
   username = StringField('username', validators=[InputRequired()])
   password = PasswordField('password', validators=[InputRequired()])
   remember = BooleanField('remember me')
+
+class RegistrationForm(FlaskForm):
+  uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
+  email = StringField('Email', validators=[InputRequired(), Email(), Length(max=50)])
+  password = PasswordField('Password', validators=[InputRequired(), Length(max=20)])
+  institution = SelectField('institution', choices=[(1,'University'),(0,'Organization')], coerce=int)
+  since = DateField('since')
+  position = StringField('Position', validators=[Length(max=20)])
+  iname = StringField('institution name', validators=[InputRequired(),Length(max=50)])
+  country = StringField('country', validators=[InputRequired(), Length(max=20)])
+  state = StringField('state', validators=[Length(max=20)])
+  zipcode = IntegerField('zipcode', validators=[NumberRange(min=9999, max=99999)])
+  division = StringField('division', validators=[Length(max=20)])
+  department = StringField('department', validators=[Length(max=20)])
+  lab = StringField('lab', validators=[Length(max=20)])
+
+class HomeSearchForm(FlaskForm):
+  occ = BooleanField('occurance', default="checked")
+  seq = BooleanField('sequence', default="checked")
+  species = StringField('species', validators=[Length(max=20)])
+
+class SearchForm(FlaskForm):
+  pass
+
+# class SubmitForm(FlaskForm):
+#   sequence_type = StringField('Sequence type', validators=[Length(max=100)])
+#   bp = IntegerField('Number of base pairs', validators=[NumberRange(min=1, max=200000)])
+#   sequence = StringField('Sequence', validators=[Length(min=10, max=200000)])
+#   accession_no = StringField('Accession number', validators=[Length(max=20)])
+#   date = DateField('date')
+#   doi = StringField('DOI', validators=[Length(max=10)])  #NOT NULL
 
 DATABASEURI = "postgresql://dsl2162:dsl2162zo2146@34.75.150.200/proj1part2"
 
@@ -143,12 +174,6 @@ def index():
   # return render_template("index.html", **context)
   return render_template("index.html")
 
-# This is an example of a different path.  You can see it at:
-# 
-#     localhost:8111/another
-#
-# Notice that the function name is another() rather than index()
-# The functions for each app.route need to have different names
 @app.route('/login', methods=['GET', 'POST'])
 def login():
   form = LoginForm()
@@ -157,10 +182,18 @@ def login():
     pwd = form.password.data
     user = g.conn.execute('SELECT * FROM User_From WHERE uname=%s', uid).first()
     if user:
+      session['user'] = { 'username': user.uname , 'email': user.email}
+      # session['user']['email'] = user.email
       if user.password == pwd:
         return redirect(url_for('dashboard'))
     return '<h1> Invalid username or password </h1>'
   return render_template('login.html', form=form)
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    if 'user' in session:
+        session.pop('user')
+    return redirect('/index')
 
 # Example of adding new data to the database
 @app.route('/add', methods=['GET'])
@@ -183,21 +216,31 @@ def add():
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
-class RegistrationForm(FlaskForm):
-  uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
-  email = StringField('Email', validators=[InputRequired(), Email(), Length(max=50)])
-  password = PasswordField('Password', validators=[InputRequired(), Length(max=20)])
-  institution = SelectField('institution', choices=[(1,'University'),(0,'Organization')], coerce=int)
-  since = DateField('since')
-  position = StringField('Position', validators=[Length(max=20)])
-  iname = StringField('institution name', validators=[InputRequired(),Length(max=50)])
-  country = StringField('country', validators=[InputRequired(), Length(max=20)])
-  state = StringField('state', validators=[Length(max=20)])
-  zipcode = IntegerField('zipcode', validators=[NumberRange(min=9999, max=99999)])
-  division = StringField('division', validators=[Length(max=20)])
-  department = StringField('department', validators=[Length(max=20)])
-  lab = StringField('lab', validators=[Length(max=20)])
+@app.route('/history', methods=['GET'])
+def history():
+  if not 'user' in session:
+    return redirect('/login')
+  cursor = g.conn.execute("SELECT genus, species, time FROM Access WHERE email=%s", session['user']['email'])
+  hist = []
+  for result in cursor:
+    hist.append(result)
+  cursor.close()
+  return render_template('history.html', hist=hist)
 
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html', name=session['user']['username'])
+
+# @app.route('/user/<uid>)
+# def show_user(uid):
+#   uid = session['user']['username']
+#   cursor = g.conn.execute("SELECT name FROM test WHERE id={uid}".format(uid=uid))
+#   names = []
+#   for result in cursor:
+#   names.append(result["name"])
+#   cursor.close()
+#   context = dict(data = names)
+# return render_template("user_profile.html", **context)
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
@@ -235,15 +278,6 @@ def register():
       g.conn.execute('INSERT INTO organisation(iname, country, division) VALUES(%s, %s, %s)',iname, coun, div)
     return redirect(url_for('home'))
   return render_template('registration.html', error=error, form=form)
-
-class HomeSearchForm(FlaskForm):
-  occ = BooleanField('occurance', default="checked")
-  seq = BooleanField('sequence', default="checked")
-  species = StringField('species', validators=[Length(max=20)])
-
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
 
 @app.route('/onereference', methods=['GET', 'POST'])
 def onereference():
@@ -291,9 +325,6 @@ def homesearch():
       return render_template('search.html', stbl=stbl)
 
   return redirect('/')
-
-class SearchForm(FlaskForm):
-  pass
 
 if __name__ == "__main__":
   import click
