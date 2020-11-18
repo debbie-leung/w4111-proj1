@@ -22,8 +22,15 @@
   <p>A Centralized Database for Animal Genomics and Biodiversity Information</p>
 </div>
 
-<form method="POST" action="/add">
-<p>Search for organisms sequence and occurrence: <input type="text" name="name"> <input type="submit" value="Submit"></p>
+<form method="POST" action="/homesearch" class="form">
+  <h3 style="text-align:center">Search for organisms' sequence and occurrence: <input type="text" name="species" placeholder="species" required></h3>
+  <p style="text-align:center">
+    <input type="checkbox" id="occ" name="occurrence" value="1"/> <label for="occurrence">Occurrence</label>
+    <input type="hidden" id="occh" name="occurrence" value="0"/>
+    <input type="checkbox" id="seq" name="sequence" value="1"/> <label for="sequence">Sequence</label> </p>
+    <input type="hidden" id="seqh" name="sequence" value="0"/>
+  <p style="text-align:center"><input type="submit" value="submit"></p>
+
 </form>
 
 {% endblock %}

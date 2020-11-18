@@ -2,6 +2,21 @@
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block content %}
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">GenBio</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li class="active">
+      <li><a href="/">Home</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+      <li><a href="registration"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+      <li><a href="login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+    </ul>
+  </div>
+</nav>
 
 <div class="container">
     <h3>Registration</h3>
@@ -11,6 +26,22 @@
         {{ wtf.form_field(form.uname) }}
         {{ wtf.form_field(form.email) }}
         {{ wtf.form_field(form.password)}}
+        {{ wtf.form_field(form.institution) }}
+
+        {{ wtf.form_field(form.iname) }}
+        {{ wtf.form_field(form.position) }}
+        {{ wtf.form_field(form.state) }}
+        {{ wtf.form_field(form.zipcode) }}
+        {{ wtf.form_field(form.country) }}
+
+        <h3>For University</h3>
+        {{ wtf.form_field(form.department) }}
+        {{ wtf.form_field(form.lab) }}
+
+        <h3>For Organization</h3>
+        {{ wtf.form_field(form.division) }}
+
+        {{wtf.form_field(form.since)}}
         <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
     </form>
 </div>

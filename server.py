@@ -19,8 +19,8 @@ from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField
-from wtforms.validators import InputRequired, Email, Length
+from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField
+from wtforms.validators import InputRequired, Email, Length, NumberRange
 from flask_bootstrap import Bootstrap
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -85,6 +85,8 @@ def teardown_request(exception):
 # 
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
+#
+
 @app.route('/')
 def index():
   """
@@ -116,14 +118,14 @@ def index():
   # You can see an example template in templates/index.html
   #
   # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
+  # for example, "data" key in the context variable defined below will be
   # accessible as a variable in index.html:
   #
   #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
   #     <div>{{data}}</div>
-  #     
+  #
   #     # creates a <div> tag for each element in data
-  #     # will print: 
+  #     # will print:
   #     #
   #     #   <div>grace hopper</div>
   #     #   <div>alan turing</div>
@@ -181,22 +183,114 @@ def add():
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
-# @app.route('/login')
-# def login():
-#     abort(401)
-#     this_is_never_executed()
 
 class RegistrationForm(FlaskForm):
-  uname = StringField('uname', validators=[InputRequired()])
-  email = StringField('email', validators=[InputRequired()])
-  password = PasswordField('password', validators=[InputRequired()])
+  uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
+  email = StringField('Email', validators=[InputRequired(), Email(), Length(max=50)])
+  password = PasswordField('Password', validators=[InputRequired(), Length(max=20)])
+  institution = SelectField('institution', choices=[(1,'University'),(0,'Organization')], coerce=int)
+  since = DateField('since')
+  position = StringField('Position', validators=[Length(max=20)])
+  iname = StringField('institution name', validators=[InputRequired(),Length(max=50)])
+  country = StringField('country', validators=[InputRequired(), Length(max=20)])
+  state = StringField('state', validators=[Length(max=20)])
+  zipcode = IntegerField('zipcode', validators=[NumberRange(min=9999, max=99999)])
+  division = StringField('division', validators=[Length(max=20)])
+  department = StringField('department', validators=[Length(max=20)])
+  lab = StringField('lab', validators=[Length(max=20)])
+
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
+  error = None
   form = RegistrationForm()
   if form.validate_on_submit():
-    return 'You are registered!'
-  return render_template('registration.html', form=form)
+    since = form.since.data
+    uname = form.uname.data
+    email = form.email.data
+    pwd = form.password.data
+    inst = form.institution.data
+    pos = form.position.data
+    iname = form.iname.data
+    coun = form.country.data
+    st = form.state.data
+    zcode = form.zipcode.data
+    div = form.division.data
+    dept = form.department.data
+    lab = form.lab.data
+
+    user = g.conn.execute('SELECT * FROM user_from WHERE uname=%s', uname).first()
+    e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
+    if user:
+      error = '<h1> This username is already in use.</h1>'
+      return render_template('registration.html', error=error, form=form)
+    if e:
+      error = '<h1> This email is already registered.</h1>'
+      return render_template('registration.html', error=error, form=form)
+
+    g.conn.execute('INSERT INTO institution(iname, country, state, zipcode) VALUES(%s, %s, %s, %s)',iname, coun, st, zcode)
+    g.conn.execute('INSERT INTO user_from(uname, email, password, since, position, iname, country) VALUES(%s, %s, %s, %s, %s, %s, %s)', uname, email, pwd, since, pos, iname, coun)
+    if inst == 1:
+      g.conn.execute('INSERT INTO university(iname, country, department, lab) VALUES(%s, %s, %s, %s)', iname, coun, dept, lab)
+    else:
+      g.conn.execute('INSERT INTO organisation(iname, country, division) VALUES(%s, %s, %s)',iname, coun, div)
+    return redirect(url_for('home'))
+  return render_template('registration.html', error=error, form=form)
+
+class HomeSearchForm(FlaskForm):
+  occ = BooleanField('occurance', default="checked")
+  seq = BooleanField('sequence', default="checked")
+  species = StringField('species', validators=[Length(max=20)])
+
+@app.route('/onereference', methods=['GET', 'POST'])
+def onereference():
+  return redirect('/')
+
+@app.route('/homesearch', methods=['GET', 'POST'])
+def homesearch():
+  if request.method == 'POST':
+    s = request.form['species']
+    occ = request.form['occurrence']
+    seq = request.form['sequence']
+    occ = int(occ)
+    seq = int(seq)
+    stbl = []
+    has = []
+    otbl = []
+
+    if (occ and seq) or (not occ and not seq):
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s)
+      for n in cursor:
+        has.append(n)
+      cursor.close()
+      for no in has:
+        stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s)
+      for n in cursor:
+        otbl.append(n)
+      cursor.close()
+      return render_template('search.html', stbl=stbl, otbl=otbl)
+
+    elif occ:
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s)
+      for n in cursor:
+        otbl.append(n)
+      cursor.close()
+      return render_template('search.html', otbl=otbl)
+
+    elif seq:
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s)
+      for n in cursor:
+        has.append(n)
+      cursor.close()
+      for no in has:
+        stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
+      return render_template('search.html', stbl=stbl)
+
+  return redirect('/')
+
+class SearchForm(FlaskForm):
+  pass
 
 if __name__ == "__main__":
   import click
