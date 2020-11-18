@@ -15,11 +15,12 @@ from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, url_for, session
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
+from country_list import countries_for_language
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField
+from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField, DateTimeField, FloatField, SelectField
 from wtforms.validators import InputRequired, Email, Length, NumberRange
 from flask_bootstrap import Bootstrap
 
@@ -56,13 +57,38 @@ class HomeSearchForm(FlaskForm):
 class SearchForm(FlaskForm):
   pass
 
-# class SubmitForm(FlaskForm):
-#   sequence_type = StringField('Sequence type', validators=[Length(max=100)])
-#   bp = IntegerField('Number of base pairs', validators=[NumberRange(min=1, max=200000)])
-#   sequence = StringField('Sequence', validators=[Length(min=10, max=200000)])
-#   accession_no = StringField('Accession number', validators=[Length(max=20)])
-#   date = DateField('date')
-#   doi = StringField('DOI', validators=[Length(max=10)])  #NOT NULL
+class SubmitForm(FlaskForm):
+  # add in organism field
+  kingdom = StringField('Kingdom', validators=[Length(max=20)])
+  phylum = StringField('Phylum', validators=[Length(max=20)])
+  org_class = StringField('Class', validators=[Length(max=20)])
+  order = StringField('Order', validators=[Length(max=20)])
+  family = StringField('Family', validators=[Length(max=20)])
+  genus = StringField('Genus', validators=[InputRequired(), Length(max=20)])
+  species = StringField('Species', validators=[InputRequired(), Length(max=20)])
+  # sequence and reference
+  sequence_type = StringField('Sequence type', validators=[Length(max=100)])
+  bp = IntegerField('Number of base pairs', validators=[NumberRange(min=1, max=200000)])
+  sequence = StringField('Sequence', validators=[Length(min=10, max=200000)])
+  accession_no = StringField('Accession number', validators=[Length(max=20)])
+  date = DateField('Date')
+  title = StringField('Article title', validators=[Length(max=500)])
+  doi = StringField('DOI', validators=[InputRequired(), Length(max=100)]) 
+  author = StringField('Author(s)', validators=[Length(max=500)])
+  journal = StringField('Journal', validators=[Length(max=100)])
+  volume = IntegerField('Volume', validators=[NumberRange(min=1)])
+  issue = IntegerField('Issue', validators=[NumberRange(min=1)])
+  journal_date = DateField('Article date')
+  page_from = IntegerField('Page from', validators=[NumberRange(min=1)])
+  page_to = IntegerField('Page to', validators=[NumberRange(min=1)])
+  #occurrence field
+  time = DateTimeField('Occurrence time')
+  occ_type = SelectField(u'Occurrence type', choices=['preserved specimen', 'human observation', 'machine observation'])
+  country = dict(countries_for_language('en'))
+  print(country)
+  location = SelectField(u'Country', choices=country.values())
+  latitude = FloatField('Latitude', validators=[NumberRange(-90.0, 90.0)])
+  longitude = FloatField('Longitude', validators=[NumberRange(min=-90, max=90)])
 
 DATABASEURI = "postgresql://dsl2162:dsl2162zo2146@34.75.150.200/proj1part2"
 
@@ -116,7 +142,6 @@ def teardown_request(exception):
 # 
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-#
 
 @app.route('/')
 def index():
@@ -140,7 +165,6 @@ def index():
   #   names.append(result['name'])  # can also be accessed using result[0]
   # cursor.close()
 
-  #
   # Flask uses Jinja templates, which is an extension to HTML where you can
   # pass data to a template and dynamically generate HTML based on the data
   # (you can think of it as simple PHP)
@@ -216,6 +240,12 @@ def add():
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
+@app.route('/dashboard')
+def dashboard():
+  if not 'user' in session:
+    return redirect('/login')
+  return render_template('dashboard.html', name=session['user']['username'])
+
 @app.route('/history', methods=['GET'])
 def history():
   if not 'user' in session:
@@ -227,9 +257,14 @@ def history():
   cursor.close()
   return render_template('history.html', hist=hist)
 
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html', name=session['user']['username'])
+@app.route('/submit', methods=['GET', 'POST'])
+def submit():
+  if not 'user' in session:
+    return redirect('/login')
+  # session['user']['email']
+  form = SubmitForm()
+  # if form.validate_on_submit():
+  return render_template('submit.html', form=form)
 
 # @app.route('/user/<uid>)
 # def show_user(uid):
