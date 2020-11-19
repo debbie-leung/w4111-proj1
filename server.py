@@ -106,7 +106,7 @@ class SubmitForm(FlaskForm):
   issue = IntegerField('Issue', validators=[NumberRange(min=1)])
   journal_date = DateField('Article date')
   page_from = IntegerField('Page from', validators=[NumberRange(min=1)])
-  page_to = IntegerField('Page to', validators=[NumberRange(min=1)])
+  page_to = IntegerField('Page to')
   #occurrence field
   time = DateTimeField('Occurrence time')
   occ_type = SelectField(u'Occurrence type', choices=['preserved specimen', 'human observation', 'machine observation'])
@@ -234,7 +234,7 @@ def login():
       session['user'] = { 'username': user.uname , 'email': user.email}
       # session['user']['email'] = user.email
       if user.password == pwd:
-        return redirect(url_for("dashboard"))
+        return redirect(url_for('dashboard', uname=uid))
     return '<h1> Invalid username or password </h1>'
   return render_template('login.html', form=form)
 
@@ -245,11 +245,11 @@ def logout():
     return redirect('/index')
 
 # Example of adding new data to the database
-@app.route('/add', methods=['GET'])
-def add():
-  name = request.form['name']
-  g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
-  return redirect('/')
+# @app.route('/add', methods=['GET'])
+# def add():
+#   name = request.form['name']
+#   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
+#   return redirect('/')
 
 # Users logging into the database
 # @app.route('/login/submit', methods=['GET'])
@@ -258,15 +258,8 @@ def add():
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
-# # Searching for sequence and occurrence in database
-# @app.route('/add', methods=['POST'])
-# def add():
-#   name = request.form['name']
-#   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
-#   return redirect('/')
-
-@app.route('/dashboard', methods=['GET', 'POST'])
-def dashboard():
+@app.route('/dashboard/<uname>', methods=['GET', 'POST'])
+def dashboard(uname):
   if not 'user' in session:
     return redirect('/login')
   uname = session['user']['username']
@@ -277,12 +270,17 @@ def profile():
   if not 'user' in session:
     return redirect('/login')
   uname = session['user']['username']
-  cursor = g.conn.execute("SELECT genus, species, time FROM Access WHERE email=%s", session['user']['email'])
-  data = []
+  cursor = g.conn.execute("SELECT * FROM User_From WHERE email=%s", session['user']['email'])
+  user_data = []
   for result in cursor:
-    data.append(result)
+    user_data.append(result)
   cursor.close()
-  return render_template('dashboard.html', uname=session['user']['username'], data=data)
+  cursor = g.conn.execute("SELECT * FROM Institution WHERE iname=%s", user_data[5])
+  inst_data = []
+  for result in cursor:
+    inst_data.append(result)
+  cursor.close()
+  return render_template('profile.html', uname=session['user']['username'], user_data=user_data, inst_data=inst_data)
 
 @app.route('/history', methods=['GET'])
 def history():
@@ -325,6 +323,7 @@ def submit():
     page_to = form.page_to.data
     time = form.time.data
     occ_type = form.occ_type.data
+    location = form.location.data
     latitude = form.latitude.data
     longitude = form.longitude.data
 
