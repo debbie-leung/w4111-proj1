@@ -1,5 +1,5 @@
 {% extends "bootstrap/base.html" %}
-
+{% import "bootstrap/wtf.html" as wtf %}
 {% block title %}
 Dashboard
 {% endblock %}
@@ -48,10 +48,46 @@ Dashboard
             </ul>
           </div>
           <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            {% if uname %}
-            <h1 class="page-header">Welcome, {{uname}}</h1>
-            {% endif %}
-          </div>
+
+            <h3>Advance Search</h3>
+              <form action="/loginadvsearch" class="form" method="post">
+        <div class="row">
+            <div class="col-sm-4" >
+        {{ form.hidden_tag() }}
+                <h4>Organism</h4>
+        {{ wtf.form_field(form.king) }}
+        {{ wtf.form_field(form.kings) }}
+        {{ wtf.form_field(form.phy) }}
+        {{ wtf.form_field(form.phys) }}
+        {{ wtf.form_field(form.cl) }}
+        {{ wtf.form_field(form.cls) }}
+        {{ wtf.form_field(form.ord) }}
+        {{ wtf.form_field(form.ords) }}
+        {{ wtf.form_field(form.fam) }}
+        {{ wtf.form_field(form.fams) }}
+        {{ wtf.form_field(form.gen) }}
+        {{ wtf.form_field(form.gens) }}
+        {{ wtf.form_field(form.spe) }}
+        {{ wtf.form_field(form.spes) }}
+            </div>
+            <div class="col-sm-4" >
+                <h4>{{ wtf.form_field(form.seq) }}</h4>
+                {{ wtf.form_field(form.sty) }}
+                {{ wtf.form_field(form.stys) }}
+                {{ wtf.form_field(form.bp) }}
+                {{ wtf.form_field(form.bps) }}
+
+            </div>
+            <div class="col-sm-4" >
+                <h4>{{ wtf.form_field(form.occ) }}</h4>
+                {{ wtf.form_field(form.oty) }}
+                {{ wtf.form_field(form.otys) }}
+                {{ wtf.form_field(form.loc) }}
+                {{ wtf.form_field(form.locs) }}
+            </div>
         </div>
-    </div>
-{% endblock %} 
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
+    </form>
+</div>
+
+{% endblock %}
