@@ -63,8 +63,21 @@ Dashboard
                       {{ wtf.form_field(form.species)}}
                       {{ wtf.form_field(form.submission_type)}}
                       
-                      <h3>For Sequence</h3>
-                      {{ wtf.form_field(form.sequence_type) }}
+                      <div class="form-group">
+                      <label for="seeSubmission">Submission Type</label>
+                      <select class="form-control" id="seeSubmission">
+                        <option value="yes">Sequence</option>
+                        <option value="no">Occurrence</option>
+                      </select>
+                      </div>
+
+                      <!-- <h3>For Sequence</h3> -->
+                      <div class="form-group" id="kingdomDiv">
+                        <label for="kingdom">Kingdom</label>
+                        <input type="kingdom" class="form-control" id="kingdom">
+                      </div>
+
+                      <!-- {{ wtf.form_field(form.sequence_type) }}
                       {{ wtf.form_field(form.bp) }}
                       {{ wtf.form_field(form.sequence)}}
                       {{ wtf.form_field(form.accession_no)}}
@@ -77,19 +90,25 @@ Dashboard
                       {{ wtf.form_field(form.issue) }}
                       {{ wtf.form_field(form.journal_date) }}
                       {{ wtf.form_field(form.page_from) }}
-                      {{ wtf.form_field(form.page_to) }}
+                      {{ wtf.form_field(form.page_to) }} -->
 
-                      <h3>For Occurrence</h3>
+                      <!-- <h3>For Occurrence</h3>
                       {{ wtf.form_field(form.time) }}
                       {{ wtf.form_field(form.occ_type) }}
                       {{ wtf.form_field(form.location) }}
                       {{ wtf.form_field(form.latitude)}}
                       {{ wtf.form_field(form.longitude) }}
-                      
+                       -->
                       <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
                   </form>
               </div>
           </div>
         </div>
     </div>
+  <script>
+  $("#seeSubmission").change(function() {
+    $("#kingdomDiv").toggle();
+  })
+  </script>
+
 {% endblock %} 
