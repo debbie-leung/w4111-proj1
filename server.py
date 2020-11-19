@@ -432,10 +432,6 @@ def homesearch():
       for n in cursor:
         otbl.append(n)
       cursor.close()
-      if 'user' in session and (otbl):
-        usere = session['user']['email']
-        g.conn.execute('INSERT INTO history(time) VALUES(now())')
-        g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, now())', usere, gen, s)
 
       return render_template(h, otbl=otbl)
 
@@ -451,10 +447,6 @@ def homesearch():
         val = cursor.first()
         stbl += [val]
         cursor.close()
-        if 'user' in session and (stbl):
-          usere = session['user']['email']
-          g.conn.execute('INSERT INTO history(time) VALUES(now())')
-          g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, now())', usere, gen, s)
 
       return render_template(h, stbl=stbl)
 
@@ -578,11 +570,21 @@ def advancesearch():
           'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
           no[0], ref[0]).first()]
 
-    if 'user' in session:
-      user = session['user']['username']
-      return render_template('loginsearch.html', stbl=stbl, otbl=otbl, user=user)
-    user = None
-    return render_template('search.html', stbl=stbl, otbl=otbl, user=user)
+    if 'user' in session and (otbl or stbl):
+      tm = datetime.datetime.now()
+      g.conn.execute('INSERT INTO history(time) VALUES(%s)', tm)
+      usere = session['user']['email']
+      if (otbl and stbl) or otbl:
+        for x in otbl:
+          g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, x[5], x[6], tm)
+      elif stbl:
+        for y in stbl:
+          lt = g.conn.execute('SELECT genus, species FROM has WHERE accession_no=(%s)', y[4]).first()
+          g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, lt[0], lt[1], tm)
+
+      return render_template('loginsearch.html', stbl=stbl, otbl=otbl)
+
+    return render_template('search.html', stbl=stbl, otbl=otbl)
 
   if 'user' in session:
     return render_template('loginadvsearch.html', error=error, form=form)
