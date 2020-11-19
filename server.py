@@ -245,7 +245,7 @@ def dashboard():
     return redirect('/login')
   return render_template('dashboard.html', name=session['user']['username'])
 
-@app.route('/history', methods=['GET'])
+@app.route('/dashboard/history', methods=['GET'])
 def history():
   if not 'user' in session:
     return redirect('/login')
