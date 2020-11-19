@@ -85,7 +85,6 @@ class SubmitForm(FlaskForm):
   time = DateTimeField('Occurrence time')
   occ_type = SelectField(u'Occurrence type', choices=['preserved specimen', 'human observation', 'machine observation'])
   country = dict(countries_for_language('en'))
-  print(country)
   location = SelectField(u'Country', choices=country.values())
   latitude = FloatField('Latitude', validators=[NumberRange(-90.0, 90.0)])
   longitude = FloatField('Longitude', validators=[NumberRange(min=-90, max=90)])
@@ -261,10 +260,55 @@ def history():
 def submit():
   if not 'user' in session:
     return redirect('/login')
-  # session['user']['email']
+  error = None
   form = SubmitForm()
-  # if form.validate_on_submit():
-  return render_template('submit.html', form=form)
+  if form.validate_on_submit():
+    kingdom = form.kingdom.data
+    phylum = form.phylum.data
+    org_class = form.org_class.data
+    order = form.order.data
+    family = form.family.data
+    genus = form.genus.data
+    species = form.species.data
+    sequence_type = form.sequence_type.data
+    bp = form.bp.data
+    sequence = form.sequence.data
+    accession_no = form.accession_no.data
+    title = form.title.data
+    doi = form.doi.data
+    author = form.author.data
+    journal = form.journal.data
+    volume = form.volume.data
+    issue = form.issue.data
+    journal_date = form.journal_date.data
+    page_from = form.page_from.data
+    page_to = form.page_to.data
+    time = form.time.data
+    occ_type = form.occ_type.data
+    latitude = form.latitude.data
+    longitude = form.longitude.data
+
+    # org = g.conn.execute('SELECT * FROM Organism WHERE genus=%s AND species=%s', genus, species).first()
+    # e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
+    # if org:
+    #   error = '<h1> This username is already in use.</h1>'
+    #   return render_template('registration.html', error=error, form=form)
+    # if e:
+    #   error = '<h1> This email is already registered.</h1>'
+    #   return render_template('registration.html', error=error, form=form)
+
+    g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
+    
+    # if inst == 1:
+    g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, %s, %s)', sequence_type, bp, sequence, accession_no, date, doi)
+    g.conn.execute('INSERT INTO Reference VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)', title, doi, author, journal, volume, issue, journal_date, page_from, page_to)
+    g.conn.execute('INSERT INTO Has VALUES(%s, %s, %s)', genus, species, accession_no)
+    g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, %s)', session['user']['email'], genus, species, accession_no, NOW())
+  # else:
+    g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
+    g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, %s)', session['user']['email'], time, latitude, longitude, genus, species, NOW())
+    return redirect(url_for('home'))
+  return render_template('submit.html', error=error, form=form)
 
 # @app.route('/user/<uid>)
 # def show_user(uid):
