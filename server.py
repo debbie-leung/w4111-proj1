@@ -22,6 +22,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, DateField, DateTimeField, FloatField, SelectField, SelectMultipleField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, Optional
 from flask_bootstrap import Bootstrap
+import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -46,11 +47,6 @@ class RegistrationForm(FlaskForm):
   division = StringField('Division', validators=[Length(max=20)])
   department = StringField('Department', validators=[Length(max=20)])
   lab = StringField('Lab', validators=[Length(max=20)])
-
-class HomeSearchForm(FlaskForm):
-  occ = BooleanField('occurance', default="checked")
-  seq = BooleanField('sequence', default="checked")
-  species = StringField('species', validators=[Length(max=20)])
 
 class SearchForm(FlaskForm):
   king = BooleanField('Kingdom')
@@ -388,10 +384,6 @@ def register():
     return redirect('/login')
   return render_template('registration.html', error=error, form=form)
 
-@app.route('/onereference', methods=['GET', 'POST'])
-def onereference():
-  return redirect('/')
-
 @app.route('/homesearch', methods=['GET', 'POST'])
 def homesearch():
   if request.method == 'POST':
@@ -406,6 +398,12 @@ def homesearch():
     stbl = []
     has = []
     otbl = []
+
+    if 'user' in session:
+      h = 'loginsearch.html'
+      t = datetime.datetime.now()
+    else:
+      h = 'search.html'
 
     if (occ and seq) or (not occ and not seq):
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
@@ -422,14 +420,24 @@ def homesearch():
       for n in cursor:
         otbl.append(n)
       cursor.close()
-      return render_template('search.html', stbl=stbl, otbl=otbl)
+      if 'user' in session and (stbl or otbl):
+        usere = session['user']['email']
+        g.conn.execute('INSERT INTO history(time) VALUES(%s)', t)
+        g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, gen, s, t)
+
+      return render_template(h, stbl=stbl, otbl=otbl)
 
     elif occ:
       cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         otbl.append(n)
       cursor.close()
-      return render_template('search.html', otbl=otbl)
+      if 'user' in session and (otbl):
+        usere = session['user']['email']
+        g.conn.execute('INSERT INTO history(time) VALUES(now())')
+        g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, now())', usere, gen, s)
+
+      return render_template(h, otbl=otbl)
 
     elif seq:
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
@@ -443,7 +451,12 @@ def homesearch():
         val = cursor.first()
         stbl += [val]
         cursor.close()
-      return render_template('search.html', stbl=stbl)
+        if 'user' in session and (stbl):
+          usere = session['user']['email']
+          g.conn.execute('INSERT INTO history(time) VALUES(now())')
+          g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, now())', usere, gen, s)
+
+      return render_template(h, stbl=stbl)
 
   return redirect('/')
 
