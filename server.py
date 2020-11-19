@@ -66,6 +66,7 @@ class SubmitForm(FlaskForm):
   family = StringField('Family', validators=[Length(max=20)])
   genus = StringField('Genus', validators=[InputRequired(), Length(max=20)])
   species = StringField('Species', validators=[InputRequired(), Length(max=20)])
+  submission_type = SelectField('Submission Type', choices=[(1,'Sequence'),(0,'Occurrence')], coerce=int)
   # sequence and reference
   sequence_type = StringField('Sequence type', validators=[Length(max=100)])
   bp = IntegerField('Number of base pairs', validators=[NumberRange(min=1, max=200000)])
@@ -208,7 +209,7 @@ def login():
       session['user'] = { 'username': user.uname , 'email': user.email}
       # session['user']['email'] = user.email
       if user.password == pwd:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for("dashboard"))
     return '<h1> Invalid username or password </h1>'
   return render_template('login.html', form=form)
 
@@ -239,11 +240,24 @@ def add():
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
   if not 'user' in session:
     return redirect('/login')
-  return render_template('dashboard.html', name=session['user']['username'])
+  uname = session['user']['username']
+  return render_template('dashboard.html', uname=session['user']['username'])
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+  if not 'user' in session:
+    return redirect('/login')
+  uname = session['user']['username']
+  cursor = g.conn.execute("SELECT genus, species, time FROM Access WHERE email=%s", session['user']['email'])
+  data = []
+  for result in cursor:
+    data.append(result)
+  cursor.close()
+  return render_template('dashboard.html', uname=session['user']['username'], data=data)
 
 @app.route('/history', methods=['GET'])
 def history():
@@ -270,6 +284,7 @@ def submit():
     family = form.family.data
     genus = form.genus.data
     species = form.species.data
+    submission_type = form.submission_type.data
     sequence_type = form.sequence_type.data
     bp = form.bp.data
     sequence = form.sequence.data
@@ -299,27 +314,16 @@ def submit():
 
     g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
     
-    # if inst == 1:
-    g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, %s, %s)', sequence_type, bp, sequence, accession_no, date, doi)
-    g.conn.execute('INSERT INTO Reference VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)', title, doi, author, journal, volume, issue, journal_date, page_from, page_to)
-    g.conn.execute('INSERT INTO Has VALUES(%s, %s, %s)', genus, species, accession_no)
-    g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, %s)', session['user']['email'], genus, species, accession_no, NOW())
-  # else:
-    g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
-    g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, %s)', session['user']['email'], time, latitude, longitude, genus, species, NOW())
-    return redirect(url_for('home'))
+    if submission_type == 1:
+      g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, %s, %s)', sequence_type, bp, sequence, accession_no, date, doi)
+      g.conn.execute('INSERT INTO Reference VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)', title, doi, author, journal, volume, issue, journal_date, page_from, page_to)
+      g.conn.execute('INSERT INTO Has VALUES(%s, %s, %s)', genus, species, accession_no)
+      g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, %s)', session['user']['email'], genus, species, accession_no, NOW())
+    else:
+      g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
+      g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, %s)', session['user']['email'], time, latitude, longitude, genus, species, NOW())
+    return redirect(url_for('dashboard'))  
   return render_template('submit.html', error=error, form=form)
-
-# @app.route('/user/<uid>)
-# def show_user(uid):
-#   uid = session['user']['username']
-#   cursor = g.conn.execute("SELECT name FROM test WHERE id={uid}".format(uid=uid))
-#   names = []
-#   for result in cursor:
-#   names.append(result["name"])
-#   cursor.close()
-#   context = dict(data = names)
-# return render_template("user_profile.html", **context)
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
