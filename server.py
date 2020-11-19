@@ -16,13 +16,8 @@ from flask import Flask, request, render_template, g, redirect, Response, url_fo
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from country_list import countries_for_language
-from wtforms import StringField, PasswordField, BooleanField
-from wtforms.validators import InputRequired, Email, Length
-
-from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField, DateTimeField, FloatField, SelectField, SelectMultipleField
-from wtforms.validators import InputRequired, Email, Length, NumberRange
-from flask_bootstrap import Bootstrap
+from wtforms.validators import InputRequired, Email, Length, NumberRange, Optional
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -106,14 +101,14 @@ class SubmitForm(FlaskForm):
   issue = IntegerField('Issue', validators=[NumberRange(min=1)])
   journal_date = DateField('Article date')
   page_from = IntegerField('Page from', validators=[NumberRange(min=1)])
-  page_to = IntegerField('Page to')
+  page_to = IntegerField('Page to', validators=[Optional(), NumberRange(min=1)])
   #occurrence field
-  time = DateTimeField('Occurrence time')
-  occ_type = SelectField(u'Occurrence type', choices=['preserved specimen', 'human observation', 'machine observation'])
+  time = DateTimeField('Occurrence time', validators=[Optional()])
+  occ_type = SelectField(u'Occurrence type', validators=[Optional()], choices=['preserved specimen', 'human observation', 'machine observation'])
   country = dict(countries_for_language('en'))
-  location = SelectField(u'Country', choices=country.values())
-  latitude = FloatField('Latitude', validators=[NumberRange(-90.0, 90.0)])
-  longitude = FloatField('Longitude', validators=[NumberRange(min=-90, max=90)])
+  location = SelectField(u'Country', validators=[Optional()], choices=country.values())
+  latitude = FloatField('Latitude', validators=[Optional(), NumberRange(-90.0, 90.0)])
+  longitude = FloatField('Longitude', validators=[Optional(), NumberRange(min=-90, max=90)])
 
 DATABASEURI = "postgresql://dsl2162:dsl2162zo2146@34.75.150.200/proj1part2"
 
@@ -258,15 +253,15 @@ def logout():
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
-@app.route('/dashboard/<uname>', methods=['GET', 'POST'])
+@app.route('/<uname>/dashboard', methods=['GET', 'POST'])
 def dashboard(uname):
   if not 'user' in session:
     return redirect('/login')
   uname = session['user']['username']
   return render_template('dashboard.html', uname=session['user']['username'])
 
-@app.route('/profile', methods=['GET', 'POST'])
-def profile():
+@app.route('/<uname>/profile', methods=['GET', 'POST'])
+def profile(uname):
   if not 'user' in session:
     return redirect('/login')
   uname = session['user']['username']
@@ -282,8 +277,8 @@ def profile():
   cursor.close()
   return render_template('profile.html', uname=session['user']['username'], user_data=user_data, inst_data=inst_data)
 
-@app.route('/history', methods=['GET'])
-def history():
+@app.route('/<uname>/history', methods=['GET'])
+def history(uname):
   if not 'user' in session:
     return redirect('/login')
   cursor = g.conn.execute("SELECT genus, species, time FROM Access WHERE email=%s", session['user']['email'])
@@ -293,8 +288,8 @@ def history():
   cursor.close()
   return render_template('history.html', hist=hist)
 
-@app.route('/submit', methods=['GET', 'POST'])
-def submit():
+@app.route('/<uname>/submit', methods=['GET', 'POST'])
+def submit(uname):
   if not 'user' in session:
     return redirect('/login')
   error = None
@@ -339,14 +334,14 @@ def submit():
     g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
     
     if submission_type == 1:
-      g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, %s, %s)', sequence_type, bp, sequence, accession_no, date, doi)
       g.conn.execute('INSERT INTO Reference VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)', title, doi, author, journal, volume, issue, journal_date, page_from, page_to)
+      g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, NOW()::date, %s)', sequence_type, bp, sequence, accession_no, doi)
       g.conn.execute('INSERT INTO Has VALUES(%s, %s, %s)', genus, species, accession_no)
-      g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, %s)', session['user']['email'], genus, species, accession_no, NOW())
+      g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, NOW()::date)', session['user']['email'], genus, species, accession_no)
     else:
       g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
-      g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, %s)', session['user']['email'], time, latitude, longitude, genus, species, NOW())
-    return redirect(url_for('dashboard'))  
+      g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, NOW()::date)', session['user']['email'], time, latitude, longitude, genus, species)
+    return redirect(url_for('dashboard', uname=session['user']['username']))  
   return render_template('submit.html', error=error, form=form)
 
 @app.route("/registration", methods=['GET', 'POST'])
