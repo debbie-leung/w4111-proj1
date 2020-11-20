@@ -88,10 +88,10 @@ class SubmitForm(FlaskForm):
   species = StringField('Species', validators=[InputRequired(), Length(max=20)])
   submission_type = SelectField('Submission Type', choices=[(1,'Sequence'),(0,'Occurrence')], coerce=int)
   # sequence and reference
-  sequence_type = StringField('Sequence type', validators=[Length(max=100)])
+  seq_type = StringField('Sequence type', validators=[Length(max=100)])
   bp = IntegerField('Number of base pairs', validators=[NumberRange(min=1, max=200000)])
-  sequence = StringField('Sequence', validators=[Length(min=10, max=200000)])
-  accession_no = StringField('Accession number', validators=[Length(max=20)])
+  seq = StringField('Sequence', validators=[Length(min=10, max=200000)])
+  acc_no = StringField('Accession number', validators=[Length(max=20)])
   date = DateField('Date')
   title = StringField('Article title', validators=[Length(max=500)])
   doi = StringField('DOI', validators=[InputRequired(), Length(max=100)]) 
@@ -103,12 +103,12 @@ class SubmitForm(FlaskForm):
   page_from = IntegerField('Page from', validators=[NumberRange(min=1)])
   page_to = IntegerField('Page to', validators=[Optional(), NumberRange(min=1)])
   #occurrence field
-  time = DateTimeField('Occurrence time', validators=[Optional()])
-  occ_type = SelectField(u'Occurrence type', validators=[Optional()], choices=['preserved specimen', 'human observation', 'machine observation'])
+  time = DateTimeField('Occurrence time')
+  occ_type = SelectField(u'Occurrence type', choices=['preserved specimen', 'human observation', 'machine observation'])
   country = dict(countries_for_language('en'))
-  location = SelectField(u'Country', validators=[Optional()], choices=country.values())
-  latitude = FloatField('Latitude', validators=[Optional(), NumberRange(-90.0, 90.0)])
-  longitude = FloatField('Longitude', validators=[Optional(), NumberRange(min=-90, max=90)])
+  location = SelectField(u'Country', choices=country.values())
+  latitude = FloatField('Latitude', validators=[NumberRange(-90.0, 90.0)])
+  longitude = FloatField('Longitude', validators=[NumberRange(min=-90, max=90)])
 
 DATABASEURI = "postgresql://dsl2162:dsl2162zo2146@34.75.150.200/proj1part2"
 
@@ -302,25 +302,26 @@ def submit(uname):
     family = form.family.data
     genus = form.genus.data
     species = form.species.data
-    submission_type = form.submission_type.data
-    sequence_type = form.sequence_type.data
-    bp = form.bp.data
-    sequence = form.sequence.data
-    accession_no = form.accession_no.data
-    title = form.title.data
-    doi = form.doi.data
-    author = form.author.data
-    journal = form.journal.data
-    volume = form.volume.data
-    issue = form.issue.data
-    journal_date = form.journal_date.data
-    page_from = form.page_from.data
-    page_to = form.page_to.data
-    time = form.time.data
-    occ_type = form.occ_type.data
-    location = form.location.data
-    latitude = form.latitude.data
-    longitude = form.longitude.data
+    seq_type = request.form['seq_type']
+    bp = request.form['bp']
+    seq = request.form['seq']
+    acc_no = request.form['acc_no']
+    title = request.form['title']
+    doi = request.form['doi']
+    author = request.form['author']
+    journal = request.form['journal']
+    volume = request.form['volume']
+    issue = request.form['issue']
+    journal_date = request.form['journal_date']
+    page_from = request.form['page_from']
+    page_to = request.form['page_to']
+    time = request.form['time']
+    occ_type = request.form['occ_type']
+    location = request.form['location']
+    latitude = request.form['latitude']
+    longitude = request.form['longitude']
+    occurrence = int(request.form['occurrence'])
+    sequence = int(request.form['sequence'])
 
     # org = g.conn.execute('SELECT * FROM Organism WHERE genus=%s AND species=%s', genus, species).first()
     # e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
@@ -333,12 +334,12 @@ def submit(uname):
 
     g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
     
-    if submission_type == 1:
+    if sequence:
       g.conn.execute('INSERT INTO Reference VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)', title, doi, author, journal, volume, issue, journal_date, page_from, page_to)
-      g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, NOW()::date, %s)', sequence_type, bp, sequence, accession_no, doi)
-      g.conn.execute('INSERT INTO Has VALUES(%s, %s, %s)', genus, species, accession_no)
-      g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, NOW()::date)', session['user']['email'], genus, species, accession_no)
-    else:
+      g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, NOW()::date, %s)', seq_type, bp, seq, acc_no, doi)
+      g.conn.execute('INSERT INTO Has VALUES(%s, %s, %s)', genus, species, acc_no)
+      g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, NOW()::date)', session['user']['email'], genus, species, acc_no)
+    if occurrence:
       g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
       g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, NOW()::date)', session['user']['email'], time, latitude, longitude, genus, species)
     return redirect(url_for('dashboard', uname=session['user']['username']))  
@@ -556,11 +557,7 @@ def advancesearch():
           'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
           no[0], ref[0]).first()]
 
-
-
     return render_template('search.html', stbl=stbl, otbl=otbl)
-
-
   return render_template('advancesearch.html', error=error, form=form)
 
 
