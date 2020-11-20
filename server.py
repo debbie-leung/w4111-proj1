@@ -265,8 +265,6 @@ def profile(uname):
   for result in cursor:
     user_data.append(result)
   cursor.close()
-  print(user_data)
-  print(user_data[0][5])
   cursor = g.conn.execute("SELECT state, zipcode FROM User_From u NATURAL JOIN Institution i WHERE u.iname=%s", user_data[0][5])
   inst_data = []
   for result in cursor:
