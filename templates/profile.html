@@ -52,16 +52,6 @@ Profile
             <h1 class="page-header">User Profile for {{uname}}</h1>
             {% endif %}
 
-            <!-- {% for item in user_data %}
-            <p>uname: {{item[0]}}</p>
-            <p>email: {{item[1]}}</p>
-            <p>institution: {{item[5]}}</p>
-            {% if item[]%}
-            {% endif %}
-            <p>position: {{item[4]}}</p>
-            <p>country: {{item[6]}}</p>
-            {% endfor %} -->
-
             <form method="POST" action="/{{uname}}/profile" class="form">
                 {% for item in user_data %}
                 <div class="form-group row">
