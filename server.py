@@ -25,9 +25,9 @@ app.config['SECRET_KEY'] = os.urandom(24)
 Bootstrap(app)
 
 class LoginForm(FlaskForm):
-  username = StringField('username', validators=[InputRequired()])
-  password = PasswordField('password', validators=[InputRequired()])
-  remember = BooleanField('remember me')
+  username = StringField('Username', validators=[InputRequired()])
+  password = PasswordField('Password', validators=[InputRequired()])
+  remember = BooleanField('Remember me')
 
 class RegistrationForm(FlaskForm):
   uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
@@ -237,7 +237,7 @@ def login():
 def logout():
     if 'user' in session:
         session.pop('user')
-    return redirect('/index')
+    return redirect('/')
 
 # Example of adding new data to the database
 # @app.route('/add', methods=['GET'])
