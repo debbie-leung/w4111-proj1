@@ -713,13 +713,13 @@ def vote(uname):
     uname = session['user']['username']
     #lstt = [x for x in g.conn.execute('SELECT genus, species FROM has WHERE accession_no=(%s)', no)]
 
-    cursor = g.conn.execute("SELECT upvote, downvote FROM Vote WHERE accession_no=%s", accno)
+    cursor = g.conn.execute("SELECT upvote, downvote FROM Vote WHERE accession_no=%s AND email=%s", accno, session['user']['email'])
     boolean = []
     for result in cursor:
       boolean.append(result)
     cursor.close()
     if boolean:
-      print(boolean)
+
       flash('You have previously voted for this organisms sequence and cannot revote.')
     elif not boolean:
       cursor = g.conn.execute("SELECT genus, species FROM Has WHERE accession_no=%s", accno)
