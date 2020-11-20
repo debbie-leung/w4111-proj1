@@ -489,7 +489,7 @@ def loginsearch(uname):
         g.conn.execute('INSERT INTO history(time) VALUES(%s)', t)
         g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, gen, s, t)
 
-      return render_template('loginsearch.html', stbl=stbl, otbl=otbl)
+      return render_template('loginsearch.html', stbl=stbl, otbl=otbl, uname=uname)
 
     elif occ:
       cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
