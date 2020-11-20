@@ -447,7 +447,8 @@ def homesearch():
         val = cursor.first()
         stbl += [val]
         cursor.close()
-
+      
+      print(stbl)
       return render_template('search.html', stbl=stbl)
 
   return redirect('/')
@@ -799,19 +800,35 @@ def vote(uname):
     redirect('/login')
 
   if request.method == 'POST':
-
+    error = None
     vote = request.form['vote']
     accno = request.form['accno']
-    print(accno)
-    print("result")
-    print(vote)
     uname = session['user']['username']
-    print("vote")
     #lstt = [x for x in g.conn.execute('SELECT genus, species FROM has WHERE accession_no=(%s)', no)]
 
-    #if g.conn.execute('SELECT * FROM vote WHERE genus=(%s) and species=(%s)', )
+    cursor = g.conn.execute("SELECT upvote, downvote FROM Vote WHERE accession_no=%s", accno)
+    boolean = []
+    for result in cursor:
+      boolean.append(result)
+    cursor.close()
+    if boolean:
+      error = "You have previously voted for this organism's sequence and cannot revote."
+    elif not boolean:
+      cursor = g.conn.execute("SELECT genus, species FROM Has WHERE accession_no=%s", accno)
+      animal = []
+      for result in cursor:
+        animal.append(result)
+      cursor.close()
+      genus = animal[0][0]
+      species = animal[0][1]
+      if vote == "up":
+        g.conn.execute('INSERT INTO Vote VALUES(%s, %s, %s, %s, NOW()::date, %s, %s)', session['user']['email'], genus, species, accno, '1', '0')
+      elif vote == "down":
+        g.conn.execute('INSERT INTO Vote VALUES(%s, %s, %s, %s, NOW()::date, %s, %s)', session['user']['email'], genus, species, accno, '0', '1')
+    # print(stbl)
+    # return render_template('loginsearch.html', uname=session['user']['username'], error=error, stbl=stbl)
   return redirect(url_for('dashboard', uname=uname))
-
+  
 if __name__ == "__main__":
   import click
 
