@@ -293,24 +293,12 @@ def submit(uname):
   if not 'user' in session:
     return redirect('/login')
   error = None
-  # form = SubmitForm()
-  print("before submit")
-  # print(form.validate_on_submit())
-  # if form.validate_on_submit():
-  #   kingdom = form.kingdom.data
-  #   print("kingdom")
-  #   print(kingdom)
-  #   phylum = form.phylum.data
-  #   org_class = form.org_class.data
-  #   order = form.order.data
-  #   family = form.family.data
-  #   genus = form.genus.data
-  #   species = form.species.data
+  country = dict(countries_for_language('en'))
+  location = country.values()
+  otype = ['preserved specimen', 'human observation', 'machine observation']
 
   if request.method == 'POST':
     kingdom = request.form['kingdom']
-    print("kingdom")
-    print(kingdom)
     phylum = request.form['phylum']
     org_class = request.form['org_class']
     order = request.form['order']
@@ -336,22 +324,26 @@ def submit(uname):
     location = request.form['location']
     latitude = request.form['latitude']
     longitude = request.form['longitude']
-    print("test")
     sequence = 'sequence' in request.form
-    print(sequence)
     occurrence = 'occurrence' in request.form
-    print(occurrence)
     
     # org = g.conn.execute('SELECT * FROM Organism WHERE genus=%s AND species=%s', genus, species).first()
     # e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
     # if org:
-    #   error = '<h1> This username is already in use.</h1>'
+    #   error = '<h1> This sequence is already in the database </h1>'
     #   return render_template('registration.html', error=error, form=form)
     # if e:
     #   error = '<h1> This email is already registered.</h1>'
     #   return render_template('registration.html', error=error, form=form)
     print("test1")
-    g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
+    cursor = g.conn.execute("SELECT * FROM Organism WHERE genus=%s AND species=%s", genus, species)
+    org = []
+    for result in cursor:
+      org.append(result)
+    cursor.close()
+    print(org)
+    if not org:
+      g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
     print("test2")
 
     if sequence == True:
@@ -363,7 +355,7 @@ def submit(uname):
       g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
       g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, NOW()::date)', session['user']['email'], time, latitude, longitude, genus, species)
     return redirect(url_for('dashboard', uname=session['user']['username']))  
-  return render_template('submit.html', error=error)
+  return render_template('submit.html', error=error, otype = otype, location=location)
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
