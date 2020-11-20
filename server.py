@@ -360,7 +360,7 @@ def history(uname):
   for result in cursor:
     hist.append(result)
   cursor.close()
-  return render_template('history.html', hist=hist)
+  return render_template('history.html', hist=hist, uname=uname)
 
 @app.route('/<uname>/submit', methods=['GET', 'POST'])
 def submit(uname):
