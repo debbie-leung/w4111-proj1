@@ -84,6 +84,11 @@ Dashboard
                 {{ wtf.form_field(form.locs) }}
             </div>
         </div>
+                  <div>
+        {% if error %}
+        <p style="color:red">{{error}}</p>
+        {% endif%}
+        </div>
         <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
     </form>
 </div>

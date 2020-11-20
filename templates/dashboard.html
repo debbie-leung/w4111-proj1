@@ -49,7 +49,14 @@ Dashboard
             {% if uname %}
             <h1 class="page-header">Welcome, {{uname}}</h1>
             {% endif %}
+            <div>
+        {% if error %}
+        <p style="color:red">{{error}}</p>
+        {% endif%}
+        </div>
           </div>
         </div>
     </div>
+
+
 {% endblock %} 

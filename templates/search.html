@@ -17,6 +17,7 @@
     <ul class="nav navbar-nav">
       <li class="active">
       <li><a href="/">Home</a></li>
+        <li><a href="advancesearch"><span class="glyphicon glyphicon-search"></span> Advance Search</a></li>
     </ul>
     <ul class="nav navbar-nav navbar-right">
       <li><a href="registration"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
@@ -91,5 +92,10 @@
         </div>
 </div>
 
+<div>
+        {% if error %}
+        <p style="color:red">{{error}}</p>
+        {% endif%}
+        </div>
 
 {% endblock %}
