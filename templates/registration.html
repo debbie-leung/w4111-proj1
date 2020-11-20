@@ -28,6 +28,14 @@
         {{ wtf.form_field(form.password)}}
         {{ wtf.form_field(form.institution) }}
 
+        <!-- <div class="form-group">
+          <label for="seeInst">Institution</label>
+          <select class="form-control" id="seeInst">
+            <option>University</option>
+            <option>Organisation</option>
+          </select>
+        </div> -->
+
         {{ wtf.form_field(form.iname) }}
         {{ wtf.form_field(form.position) }}
         {{ wtf.form_field(form.state) }}
@@ -38,7 +46,7 @@
         {{ wtf.form_field(form.department) }}
         {{ wtf.form_field(form.lab) }}
 
-        <h3>For Organization</h3>
+        <h3>For Organisation</h3>
         {{ wtf.form_field(form.division) }}
 
         <div>
@@ -50,4 +58,12 @@
         <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
     </form>
 </div>
+
+<!-- <script>
+  $("#seeInst").change(function() {
+    $("#seqtypeDiv").toggle();
+    $("#bpDiv").toggle();
+    $("#seqDiv").toggle();
+</script> -->
+
 {% endblock %}
