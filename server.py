@@ -447,7 +447,143 @@ def homesearch():
 
   return redirect('/')
 
-@app.route('/loginadvsearch', methods=['GET', 'POST'])
+@app.route('/<uname>/loginadvsearch', methods=['GET', 'POST'])
+def loginadvsearch(uname):
+  error = None
+  form = SearchForm()
+  form.kings.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (kingdom) kingdom FROM organism')]
+  form.phys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (phylum) phylum FROM organism')]
+  form.cls.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (class) class FROM organism')]
+  form.ords.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (orders) orders FROM organism')]
+  form.fams.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (family) family FROM organism')]
+  form.gens.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (genus) genus FROM organism')]
+  form.spes.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (species) species FROM organism')]
+  form.stys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (type) type FROM sequence_source')]
+  form.bps.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (bp) bp FROM sequence_source')]
+  form.otys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (type) type FROM occ_records')]
+  form.locs.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (location) location FROM occ_records')]
+
+  if form.validate_on_submit():
+    l=[]
+    stbl = []
+    otbl = []
+
+    dorg = {"kingdom":(form.king.data,form.kings.data), "phylum":(form.phy.data,form.phys.data), "class":(form.cl.data,form.cls.data),
+            "orders":(form.ord.data,form.ords.data), "family":(form.fam.data,form.fams.data), "genus":(form.gen.data,form.gens.data),
+            "species":(form.spe.data,form.spes.data)}
+    dseq = {'1':(form.sty.data,form.stys.data), '2':(form.bp.data,form.bps.data)}
+    docc = {'1':(form.oty.data,form.otys.data), '2':(form.loc.data,form.locs.data)}
+
+    for data in dorg.keys():
+      if dorg[data][0] == True:
+        pred = dorg[data][1]
+        search = data
+        l = [x for x in g.conn.execute('SELECT genus, species FROM organism WHERE '+search+ '=(%s)', pred)]
+        break
+    if form.seq.data:
+      if l:
+        t = [x for x in g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', l[0][0], l[0][1])]
+      else:
+        t = [x for x in g.conn.execute('SELECT accession_no FROM has')]
+
+      if dseq['1'][0] and dseq['2'][0]:
+        for no in t:
+          ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s) and type=(%s) and bp=(%s)',
+                               no[0], dseq['1'][1], dseq['2'][1]).first()
+          stbl += [g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and n.type=(%s) and n.bp=(%s) and r.doi=(%s)',
+                                  no[0], dseq['1'][1], dseq['2'][1], ref[0]).first()]
+      elif dseq['1'][0]:
+        for no in t:
+          ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s) and type=(%s)',
+                               no[0], dseq['1'][1]).first()
+          stbl += [g.conn.execute(
+            'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and n.type=(%s) and r.doi=(%s)',
+            no[0], dseq['1'][1], ref[0]).first()]
+      elif dseq['2'][0]:
+        for no in t:
+          ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s) and bp=(%s)',
+                               no[0], dseq['2'][1]).first()
+          stbl += [g.conn.execute(
+            'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and n.bp=(%s) and r.doi=(%s)',
+            no[0], dseq['2'][1], ref[0]).first()]
+
+      else:
+        for no in t:
+          ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)',
+                               no[0]).first()
+          stbl += [g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
+            no[0], ref[0]).first()]
+
+    if form.occ.data:
+      if l:
+        if docc['1'][0] and docc['2'][0]:
+          otbl += [x for x in g.conn.execute(
+            'SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+            l[0][0], l[0][1], docc['1'][1], docc['2'][1])]
+        elif docc['1'][0]:
+          otbl += [x for x in
+                   g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                  l[0][0], l[0][1], docc['1'][1])]
+
+        elif docc['2'][0]:
+          otbl += [x for x in
+                   g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s) ',
+                                  l[0][0], l[0][1], docc['2'][1])]
+
+        else:
+          otbl += [x for x in g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', l[0][0], l[0][1])]
+
+      else:
+        if docc['1'][0] and docc['2'][0]:
+          otbl += [x for x in g.conn.execute(
+            'SELECT * FROM occ_records WHERE type=(%s) and location=(%s)', docc['1'][1], docc['2'][1])]
+        elif docc['1'][0]:
+          otbl += [x for x in
+                   g.conn.execute('SELECT * FROM occ_records WHERE type=(%s)',docc['1'][1])]
+
+        elif docc['2'][0]:
+          otbl += [x for x in
+                   g.conn.execute('SELECT * FROM occ_records WHERE location=(%s) ', docc['2'][1])]
+
+        else:
+          otbl += [x for x in g.conn.execute('SELECT * FROM occ_records')]
+
+    if form.seq.data == False and form.occ.data == False:
+      if l:
+        t = [x for x in g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', l[0][0], l[0][1])]
+        otbl += [x for x in
+                 g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', l[0][0], l[0][1])]
+      else:
+        t = [x for x in g.conn.execute('SELECT accession_no FROM has')]
+        otbl += [x for x in g.conn.execute('SELECT * FROM occ_records')]
+
+      for no in t:
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)',
+                             no[0]).first()
+        stbl += [g.conn.execute(
+          'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
+          no[0], ref[0]).first()]
+
+    if 'user' in session and (otbl or stbl):
+      tm = datetime.datetime.now()
+      g.conn.execute('INSERT INTO history(time) VALUES(%s)', tm)
+      usere = session['user']['email']
+      if (otbl and stbl) or otbl:
+        for x in otbl:
+          g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, x[5], x[6], tm)
+      elif stbl:
+        for y in stbl:
+          lt = g.conn.execute('SELECT genus, species FROM has WHERE accession_no=(%s)', y[4]).first()
+          g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, lt[0], lt[1], tm)
+
+      return render_template('loginsearch.html', stbl=stbl, otbl=otbl)
+
+    return render_template('search.html', stbl=stbl, otbl=otbl)
+
+  if 'user' in session:
+    return render_template('loginadvsearch.html', error=error, form=form)
+  return render_template('advancesearch.html', error=error, form=form)
+
 @app.route('/advancesearch', methods=['GET', 'POST'])
 def advancesearch():
   error = None
