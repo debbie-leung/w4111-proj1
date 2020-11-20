@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, url_for, session, jsonify
+from flask import Flask, request, render_template, g, redirect, Response, url_for, session, jsonify, flash
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from country_list import countries_for_language
@@ -812,7 +812,8 @@ def vote(uname):
       boolean.append(result)
     cursor.close()
     if boolean:
-      error = "You have previously voted for this organism's sequence and cannot revote."
+      print(boolean)
+      flash('You have previously voted for this organisms sequence and cannot revote.')
     elif not boolean:
       cursor = g.conn.execute("SELECT genus, species FROM Has WHERE accession_no=%s", accno)
       animal = []
