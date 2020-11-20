@@ -2,7 +2,7 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"></script>
 
 {% extends "bootstrap/base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
+<!-- {% import "bootstrap/wtf.html" as wtf %} -->
 
 {% block title %}
 Dashboard
@@ -54,45 +54,46 @@ Dashboard
                   <h3>Submit sequence or occurrence</h3>
                   <p>Please fill in the form to submit an organism's sequence and/or occurrence.</p>
                   <form action="submit" class="form" method="POST">
-                      {{ form.hidden_tag() }}
-
-                      <h3>Organism</h3>
-                      {{ wtf.form_field(form.kingdom) }}
-                      {{ wtf.form_field(form.phylum) }}
-                      {{ wtf.form_field(form.org_class)}}
-                      {{ wtf.form_field(form.order) }}
-                      {{ wtf.form_field(form.family) }}
-                      {{ wtf.form_field(form.genus) }}
-                      {{ wtf.form_field(form.species)}}
                       
-                      <!-- <div class="form-group">
-                      <label for="seeSubmission">Submission Type</label>
-                      <select class="form-control" id="seeSubmission">
-                        <option>Sequence</option>
-                        <option>Occurrence</option>
-                      </select>
-                      </div> -->
-                      
-                      <label for="seeSubmission">Submission Type</label>
-                      <label class="checkbox-inline"><input type="checkbox" value="" id="sequence" name="sequence" value="1" onclick="seqFunction()">Sequence</label>
-                      <label class="checkbox-inline"><input type="checkbox" value="" id="occurrence" name="occurrence" value="1" onclick="occFunction()">Occurrence</label>
-
-                      <!-- <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="sequence" name="sequence" value="1" onclick="seqFunction()">
-                        <label class="form-check-label" for="sequence">Sequence</label>
-                        <input type="hidden" id="sequence" name="sequence" value="0"/>
+                      <div class="form-group">
+                        <label for="kingdom">Kingdom</label>
+                        <input type="text" name="kingdom" class="form-control" id="kingdom">
                       </div>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="occurrence" name="occurrence" value="1" onclick="occFunction()">
-                        <label class="form-check-label" for="occurrence">Occurrence</label>
-                        <input type="hidden" id="occurrence" name="occurrence" value="0"/>
-                      </div> -->
+                      <div class="form-group">
+                        <label for="phylum">Phylum</label>
+                        <input type="text" name="phylum" class="form-control" id="phylum">
+                      </div>
+                      <div class="form-group">
+                        <label for="org_class">Class</label>
+                        <input type="text" name="org_class" class="form-control" id="org_class">
+                      </div>
+                      <div class="form-group">
+                        <label for="order">Order</label>
+                        <input type="text" name="order" class="form-control" id="order">
+                      </div>
+                      <div class="form-group">
+                        <label for="family">Family</label>
+                        <input type="text" name="family" class="form-control" id="family">
+                      </div>
+                      <div class="form-group">
+                        <label for="genus">Genus</label>
+                        <input type="text" name="genus" class="form-control" id="genus">
+                      </div>
+                      <div class="form-group">
+                        <label for="species">Species</label>
+                        <input type="text" name="species" class="form-control" id="species">
+                      </div>
 
+                      <label for="seeSubmission">Submission Type</label>
+  
+                      <label class="checkbox-inline"><input type="checkbox" id="sequence" name="sequence" value="1" onclick="seqFunction()">Sequence</label>                     
+                      <label class="checkbox-inline"><input type="checkbox" id="occurrence" name="occurrence" value="1" onclick="occFunction()">Occurrence</label>
+                    
                       <h3 id="text" style="display:none">For Sequence</h3>
 
-                      <div class="form-group" id="seqtypeDiv">
-                        <label for="seqtype">Type</label>
-                        <input type="text" name="seqtype" class="form-control" id="seqtype">
+                      <div class="form-group" id="seq_typeDiv">
+                        <label for="seq_type">Type</label>
+                        <input type="text" name="seq_type" class="form-control" id="seq_type">
                       </div>
 
                       <div class="form-group" id="bpDiv">
@@ -105,9 +106,9 @@ Dashboard
                         <input type="text" name="seq" class="form-control" id="seq">
                       </div>
 
-                      <div class="form-group" id="accnoDiv">
-                        <label for="accno">Accession Number</label>
-                        <input type="text" name="accno" class="form-control" id="accno">
+                      <div class="form-group" id="acc_noDiv">
+                        <label for="acc_no">Accession Number</label>
+                        <input type="text" name="acc_no" class="form-control" id="acc_no">
                       </div>
 
                       <div class="form-group" id="titleDiv">
@@ -206,10 +207,10 @@ Dashboard
   //   $("#page_toDiv").toggle();
   // })
 
-  $("#seqtypeDiv").hide();
+  $("#seq_typeDiv").hide();
   $("#bpDiv").hide();
   $("#seqDiv").hide();
-  $("#accnoDiv").hide();
+  $("#acc_noDiv").hide();
   $("#titleDiv").hide();
   $("#doiDiv").hide();
   $("#authorDiv").hide();
@@ -230,10 +231,10 @@ Dashboard
     var text = document.getElementById("text");
     if (checkBox.checked == true){
       text.style.display = "block";
-      $("#seqtypeDiv").show();
+      $("#seq_typeDiv").show();
       $("#bpDiv").show();
       $("#seqDiv").show();
-      $("#accnoDiv").show();
+      $("#acc_noDiv").show();
       $("#titleDiv").show();
       $("#doiDiv").show();
       $("#authorDiv").show();
@@ -245,10 +246,10 @@ Dashboard
       $("#page_toDiv").show();
     } else {
       text.style.display = "none";
-      $("#seqtypeDiv").hide();
+      $("#seq_typeDiv").hide();
       $("#bpDiv").hide();
       $("#seqDiv").hide();
-      $("#accnoDiv").hide();
+      $("#acc_noDiv").hide();
       $("#titleDiv").hide();
       $("#doiDiv").hide();
       $("#authorDiv").hide();
