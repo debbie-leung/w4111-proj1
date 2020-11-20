@@ -792,6 +792,10 @@ def advancesearch():
     return render_template('loginadvsearch.html', error=error, form=form)
   return render_template('advancesearch.html', error=error, form=form)
 
+@app.route('/<uname>/vote', methods=['GET', 'POST'])
+def vote(uname):
+  pass
+
 
 if __name__ == "__main__":
   import click

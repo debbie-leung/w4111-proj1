@@ -81,7 +81,8 @@ Dashboard
         <font size="2"><table><caption>Sequence Data</caption>
         <thead>
             <tr><th colspan="6">Sequence</th><th colspan="8">Reference</th></tr>
-            <tr><th>DOI</th>
+            <tr>
+                <th>DOI</th>
                 <th>Type</th>
                 <th>BP</th>
                 <th>Sequence</th>
@@ -96,25 +97,35 @@ Dashboard
                 <th>Date</th>
                 <th>Page From</th>
                 <th>Page To</th>
+                <th>Vote</th>
 
             </tr>
         </thead>
         <tbody>
 
             {% for item in stbl%}
-            <tr>{% for elem in item%}
+            <tr>
+
+                {% for elem in item%}
+                {% if loop.index == 4 %}
+                {% set temp = elem %}
                 <td width="100" height="120"><div style="width: 100px; height: 120px; overflow: auto">{{elem}}</div></td>
+                {% endif %}
                 {% endfor %}
+                <td>
+                    <form action="/{{uname}}/vote" method="POST" class="form">
+                        <input type="radio"  id="up" name="vote"><span class="glyphicon glyphicon-thumbs-up"></span></input>
+                        <input type="radio"  id="down" name="vote"><span class="glyphicon glyphicon-thumbs-down"></span></input>
+                        <input type="hidden" id="no" name="no" value="{{temp}}">
+                    </form>
+                </td>
             </tr>
             {% endfor %}
             {% endif %}
         </tbody>
     </table>
-
-    <button type="button" class="btn btn-primary" name="up"><span class="glyphicon glyphicon-thumbs-up"></span></button>
-    <button type="button" class="btn btn-danger" name="down"><span class="glyphicon glyphicon-thumbs-down"></span></button>
-
             </font>
         </div>
 </div>
 {% endblock %}
+
