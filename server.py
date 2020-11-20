@@ -34,7 +34,7 @@ class RegistrationForm(FlaskForm):
   uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
   email = StringField('Email', validators=[InputRequired(), Email(), Length(max=50)])
   password = PasswordField('Password', validators=[InputRequired(), Length(max=20)])
-  institution = SelectField('institution', choices=[(1,'University'),(0,'Organization')], coerce=int)
+  institution = SelectField('Institution', choices=[(1,'University'),(0,'Organization')], coerce=int)
   position = StringField('Position', validators=[Length(max=20), Optional()])
   iname = StringField('Institution name', validators=[InputRequired(),Length(max=50)])
   country = StringField('Country', validators=[InputRequired(), Length(max=20)])
@@ -401,15 +401,6 @@ def submit(uname):
     sequence = 'sequence' in request.form
     occurrence = 'occurrence' in request.form
     
-    # org = g.conn.execute('SELECT * FROM Organism WHERE genus=%s AND species=%s', genus, species).first()
-    # e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
-    # if org:
-    #   error = '<h1> This sequence is already in the database </h1>'
-    #   return render_template('registration.html', error=error, form=form)
-    # if e:
-    #   error = '<h1> This email is already registered.</h1>'
-    #   return render_template('registration.html', error=error, form=form)
-    print("test1")
     cursor = g.conn.execute("SELECT * FROM Organism WHERE genus=%s AND species=%s", genus, species)
     org = []
     for result in cursor:
@@ -450,12 +441,15 @@ def register():
     lab = form.lab.data
 
     user = g.conn.execute('SELECT * FROM user_from WHERE uname=%s', uname).first()
+    print(user)
     e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
+    print("user")
     if user:
-      error = '<h1> This username is already in use.</h1>'
+      print(user)
+      error = 'This username is already in use.'
       return render_template('registration.html', error=error, form=form)
     if e:
-      error = '<h1> This email is already registered.</h1>'
+      error = 'This email is already registered.'
       return render_template('registration.html', error=error, form=form)
 
     if not g.conn.execute('SELECT * FROM institution WHERE iname=(%s) and country=(%s)', iname, coun).first():

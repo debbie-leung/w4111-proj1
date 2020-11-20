@@ -41,6 +41,12 @@
         <h3>For Organization</h3>
         {{ wtf.form_field(form.division) }}
 
+        <div>
+        {% if error %}
+        <p style="color:red">{{error}}</p>
+        {% endif%}
+        </div>
+
         <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
     </form>
 </div>
