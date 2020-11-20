@@ -28,7 +28,7 @@ Dashboard
             <li><a href="profile">Profile</a></li>
             <li><a href="/logout">Log Out</a></li>
           </ul>
-          <form method="POST" action="/homesearch"  class="navbar-form navbar-right">
+          <form method="POST" action="/{{uname}}/homesearch"  class="navbar-form navbar-right">
             <input  type="text" name="genusspecies" class="form-control" placeholder="Genus species">
             <input type="hidden" id="occh" name="occurrence" value="0"/>
             <input type="hidden" id="seqh" name="sequence" value="0"/>
