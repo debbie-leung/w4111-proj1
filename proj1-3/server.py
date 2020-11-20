@@ -524,7 +524,7 @@ def homesearch(uname):
         g.conn.execute('INSERT INTO history(time) VALUES(%s)', t)
         g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, gen, s, t)
 
-      return render_template('loginsearch.html', stbl=stbl, otbl=otbl, uname=uname)
+      return render_template(h, stbl=stbl, otbl=otbl, uname=uname)
 
     elif occ:
       cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
@@ -532,7 +532,7 @@ def homesearch(uname):
         otbl.append(n)
       cursor.close()
 
-      return render_template('loginsearch.html', otbl=otbl)
+      return render_template(h, otbl=otbl)
 
     elif seq:
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
@@ -547,7 +547,7 @@ def homesearch(uname):
         stbl += [val]
         cursor.close()
 
-      return render_template('loginsearch.html', stbl=stbl)
+      return render_template(h, stbl=stbl)
 
   return redirect('/')
 
