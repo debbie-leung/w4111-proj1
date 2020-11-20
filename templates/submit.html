@@ -29,7 +29,7 @@ Dashboard
           <ul class="nav navbar-nav navbar-right">
             <li><a href="#">Dashboard</a></li>
             <li><a href="#">Settings</a></li>
-            <li><a href="#">Profile</a></li>
+            <li><a href="profile">Profile</a></li>
             <li><a href="/">Log Out</a></li>
           </ul>
           <form class="navbar-form navbar-right">
@@ -51,9 +51,9 @@ Dashboard
           </div>
           <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
               <div class="container">
-                  <h3>Submit sequence of occurrence</h3>
-                  <p>Please fill in the form to submit an organism's sequence or occurrence.</p>
-                  <form action="/submit" class="form" method="POST">
+                  <h3>Submit sequence or occurrence</h3>
+                  <p>Please fill in the form to submit an organism's sequence and/or occurrence.</p>
+                  <form action="submit" class="form" method="POST">
                       {{ form.hidden_tag() }}
 
                       <h3>Organism</h3>
@@ -65,42 +65,123 @@ Dashboard
                       {{ wtf.form_field(form.genus) }}
                       {{ wtf.form_field(form.species)}}
                       
-                      <div class="form-group">
+                      <!-- <div class="form-group">
                       <label for="seeSubmission">Submission Type</label>
                       <select class="form-control" id="seeSubmission">
-                        <option value="yes">Sequence</option>
-                        <option value="no">Occurrence</option>
+                        <option>Sequence</option>
+                        <option>Occurrence</option>
                       </select>
+                      </div> -->
+                      
+                      <label for="seeSubmission">Submission Type</label>
+                      <label class="checkbox-inline"><input type="checkbox" value="" id="sequence" name="sequence" value="1" onclick="seqFunction()">Sequence</label>
+                      <label class="checkbox-inline"><input type="checkbox" value="" id="occurrence" name="occurrence" value="1" onclick="occFunction()">Occurrence</label>
+
+                      <!-- <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="sequence" name="sequence" value="1" onclick="seqFunction()">
+                        <label class="form-check-label" for="sequence">Sequence</label>
+                        <input type="hidden" id="sequence" name="sequence" value="0"/>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="occurrence" name="occurrence" value="1" onclick="occFunction()">
+                        <label class="form-check-label" for="occurrence">Occurrence</label>
+                        <input type="hidden" id="occurrence" name="occurrence" value="0"/>
+                      </div> -->
+
+                      <h3 id="text" style="display:none">For Sequence</h3>
+
+                      <div class="form-group" id="seqtypeDiv">
+                        <label for="seqtype">Type</label>
+                        <input type="text" name="seqtype" class="form-control" id="seqtype">
                       </div>
 
-                      <!-- <h3>For Sequence</h3> -->
-                      <div class="form-group" id="kingdomDiv">
-                        <label for="kingdom">Kingdom</label>
-                        <input type="kingdom" class="form-control" id="kingdom">
+                      <div class="form-group" id="bpDiv">
+                        <label for="bp">Number of Base Pairs</label>
+                        <input type="text" name="bp" class="form-control" id="bp">
                       </div>
 
-                      <!-- {{ wtf.form_field(form.sequence_type) }}
-                      {{ wtf.form_field(form.bp) }}
-                      {{ wtf.form_field(form.sequence)}}
-                      {{ wtf.form_field(form.accession_no)}}
-              
-                      {{ wtf.form_field(form.title) }}
-                      {{ wtf.form_field(form.doi) }}
-                      {{ wtf.form_field(form.author) }}
-                      {{ wtf.form_field(form.journal) }}
-                      {{ wtf.form_field(form.volume) }}
-                      {{ wtf.form_field(form.issue) }}
-                      {{ wtf.form_field(form.journal_date) }}
-                      {{ wtf.form_field(form.page_from) }}
-                      {{ wtf.form_field(form.page_to) }} -->
+                      <div class="form-group" id="seqDiv">
+                        <label for="seq">Sequence</label>
+                        <input type="text" name="seq" class="form-control" id="seq">
+                      </div>
 
-                      <!-- <h3>For Occurrence</h3>
-                      {{ wtf.form_field(form.time) }}
-                      {{ wtf.form_field(form.occ_type) }}
-                      {{ wtf.form_field(form.location) }}
-                      {{ wtf.form_field(form.latitude)}}
-                      {{ wtf.form_field(form.longitude) }}
-                       -->
+                      <div class="form-group" id="accnoDiv">
+                        <label for="accno">Accession Number</label>
+                        <input type="text" name="accno" class="form-control" id="accno">
+                      </div>
+
+                      <div class="form-group" id="titleDiv">
+                        <label for="title">Article Title</label>
+                        <input type="text" name="title" class="form-control" id="title">
+                      </div>
+                      
+                      <div class="form-group" id="doiDiv">
+                        <label for="doi">DOI</label>
+                        <input type="text" name="doi" class="form-control" id="doi">
+                      </div>
+                      
+                      <div class="form-group" id="authorDiv">
+                        <label for="author">Author(s)</label>
+                        <input type="text" name="author" class="form-control" id="author">
+                      </div>
+                     
+                      <div class="form-group" id="journalDiv">
+                        <label for="journal">Journal</label>
+                        <input type="text" name="journal" class="form-control" id="journal">
+                      </div>
+
+                      <div class="form-group" id="volumeDiv">
+                        <label for="volume">Volume</label>
+                        <input type="text" name="volume" class="form-control" id="volume">
+                      </div>
+
+                      <div class="form-group" id="issueDiv">
+                        <label for="issue">Issue</label>
+                        <input type="text" name="issue" class="form-control" id="issue">
+                      </div>
+
+                      <div class="form-group" id="journal_dateDiv">
+                        <label for="journal_date">Journal Date</label>
+                        <input type="text" name="journal_date" class="form-control" id="journal_date">
+                      </div>
+
+                      <div class="form-group" id="page_fromDiv">
+                        <label for="page_from">Page From</label>
+                        <input type="text" name="page_from" class="form-control" id="page_from">
+                      </div>
+
+                      <div class="form-group" id="page_toDiv">
+                        <label for="page_to">Page To</label>
+                        <input type="text" name="page_to" class="form-control" id="page_to">
+                      </div>
+
+                      <h3 id="text2" style="display:none">For Occurrence</h3>
+
+                      <div class="form-group" id="timeDiv">
+                        <label for="time">Time</label>
+                        <input type="text" name="time" class="form-control" id="time">
+                      </div>
+
+                      <div class="form-group" id="occ_typeDiv">
+                        <label for="occ_type">Type</label>
+                        <input type="select" name="occ_type" class="form-control" id="occ_type">
+                      </div>
+
+                      <div class="form-group" id="locationDiv">
+                        <label for="location">Location</label>
+                        <input type="select" name="location" class="form-control" id="location">
+                      </div>
+
+                      <div class="form-group" id="latitudeDiv">
+                        <label for="latitude">Latitude</label>
+                        <input type="text" name="latitude" class="form-control" id="latitude">
+                      </div>
+
+                      <div class="form-group" id="longitudeDiv">
+                        <label for="longitude">Longitude</label>
+                        <input type="text" name="longitude" class="form-control" id="longitude">
+                      </div>
+
                       <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
                   </form>
               </div>
@@ -109,9 +190,97 @@ Dashboard
     </div>
 
   <script>
-  $("#seeSubmission").change(function() {
-    $("#kingdomDiv").toggle();
-  })
+  // $("#seeSubmission").change(function() {
+  //   $("#seqtypeDiv").toggle();
+  //   $("#bpDiv").toggle();
+  //   $("#seqDiv").toggle();
+  //   $("#accnoDiv").toggle();
+  //   $("#titleDiv").toggle();
+  //   $("#doiDiv").toggle();
+  //   $("#authorDiv").toggle();
+  //   $("#journalDiv").toggle();
+  //   $("#volumeDiv").toggle();
+  //   $("#issueDiv").toggle();
+  //   $("#journal_dateDiv").toggle();
+  //   $("#page_fromDiv").toggle();
+  //   $("#page_toDiv").toggle();
+  // })
+
+  $("#seqtypeDiv").hide();
+  $("#bpDiv").hide();
+  $("#seqDiv").hide();
+  $("#accnoDiv").hide();
+  $("#titleDiv").hide();
+  $("#doiDiv").hide();
+  $("#authorDiv").hide();
+  $("#journalDiv").hide();
+  $("#volumeDiv").hide();
+  $("#issueDiv").hide();
+  $("#journal_dateDiv").hide();
+  $("#page_fromDiv").hide();
+  $("#page_toDiv").hide();
+  $("#timeDiv").hide();
+  $("#occ_typeDiv").hide();
+  $("#locationDiv").hide();
+  $("#latitudeDiv").hide();
+  $("#longitudeDiv").hide();
+
+  function seqFunction() {
+    var checkBox = document.getElementById("sequence");
+    var text = document.getElementById("text");
+    if (checkBox.checked == true){
+      text.style.display = "block";
+      $("#seqtypeDiv").show();
+      $("#bpDiv").show();
+      $("#seqDiv").show();
+      $("#accnoDiv").show();
+      $("#titleDiv").show();
+      $("#doiDiv").show();
+      $("#authorDiv").show();
+      $("#journalDiv").show();
+      $("#volumeDiv").show();
+      $("#issueDiv").show();
+      $("#journal_dateDiv").show();
+      $("#page_fromDiv").show();
+      $("#page_toDiv").show();
+    } else {
+      text.style.display = "none";
+      $("#seqtypeDiv").hide();
+      $("#bpDiv").hide();
+      $("#seqDiv").hide();
+      $("#accnoDiv").hide();
+      $("#titleDiv").hide();
+      $("#doiDiv").hide();
+      $("#authorDiv").hide();
+      $("#journalDiv").hide();
+      $("#volumeDiv").hide();
+      $("#issueDiv").hide();
+      $("#journal_dateDiv").hide();
+      $("#page_fromDiv").hide();
+      $("#page_toDiv").hide();
+    }
+  }
+
+  function occFunction() {
+    var checkBox = document.getElementById("occurrence");
+    var text = document.getElementById("text2");
+    if (checkBox.checked == true){
+      text.style.display = "block";
+      $("#timeDiv").show();
+      $("#occ_typeDiv").show();
+      $("#locationDiv").show();
+      $("#latitudeDiv").show();
+      $("#longitudeDiv").show();
+    } else {
+      text.style.display = "none";
+      $("#timeDiv").hide();
+      $("#occ_typeDiv").hide();
+      $("#locationDiv").hide();
+      $("#latitudeDiv").hide();
+      $("#longitudeDiv").hide();
+    }
+  }
+  
   </script>
 
 {% endblock %} 

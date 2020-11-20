@@ -16,13 +16,8 @@ from flask import Flask, request, render_template, g, redirect, Response, url_fo
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from country_list import countries_for_language
-from wtforms import StringField, PasswordField, BooleanField
-from wtforms.validators import InputRequired, Email, Length
-
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField, DateTimeField, FloatField, SelectField
-from wtforms.validators import InputRequired, Email, Length, NumberRange
-from flask_bootstrap import Bootstrap
+from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField, DateTimeField, FloatField, SelectField, SelectMultipleField
+from wtforms.validators import InputRequired, Email, Length, NumberRange, Optional
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -30,9 +25,9 @@ app.config['SECRET_KEY'] = os.urandom(24)
 Bootstrap(app)
 
 class LoginForm(FlaskForm):
-  username = StringField('username', validators=[InputRequired()])
-  password = PasswordField('password', validators=[InputRequired()])
-  remember = BooleanField('remember me')
+  username = StringField('Username', validators=[InputRequired()])
+  password = PasswordField('Password', validators=[InputRequired()])
+  remember = BooleanField('Remember me')
 
 class RegistrationForm(FlaskForm):
   uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
@@ -55,7 +50,32 @@ class HomeSearchForm(FlaskForm):
   species = StringField('species', validators=[Length(max=20)])
 
 class SearchForm(FlaskForm):
-  pass
+  king = BooleanField('Kingdom')
+  kings = SelectField('Kingdom Selection')
+  phy = BooleanField('Phylum')
+  phys = SelectField('Phylum Selection')
+  cl = BooleanField('Class')
+  cls = SelectField('Class Selection')
+  ord = BooleanField('Orders')
+  ords = SelectField('Orders Selection')
+  fam = BooleanField('Family')
+  fams = SelectField('Family Selection')
+  gen = BooleanField('Genus')
+  gens = SelectField('Genus Selection')
+  spe = BooleanField('Species')
+  spes = SelectField('Species Selection')
+  seq = BooleanField('Sequence')
+
+  sty = BooleanField('Sequence Type')
+  stys = SelectField('Sequence Type Selection')
+  bp = BooleanField('BP')
+  bps = SelectField('BP Selection')
+  occ = BooleanField('Occurrence')
+
+  oty = BooleanField('Occurence Type')
+  otys = SelectField('Occurrence Type Selection')
+  loc = BooleanField('Location')
+  locs = SelectField('Location Selection')
 
 class SubmitForm(FlaskForm):
   # add in organism field
@@ -66,11 +86,12 @@ class SubmitForm(FlaskForm):
   family = StringField('Family', validators=[Length(max=20)])
   genus = StringField('Genus', validators=[InputRequired(), Length(max=20)])
   species = StringField('Species', validators=[InputRequired(), Length(max=20)])
+  submission_type = SelectField('Submission Type', choices=[(1,'Sequence'),(0,'Occurrence')], coerce=int)
   # sequence and reference
-  sequence_type = StringField('Sequence type', validators=[Length(max=100)])
+  seq_type = StringField('Sequence type', validators=[Length(max=100)])
   bp = IntegerField('Number of base pairs', validators=[NumberRange(min=1, max=200000)])
-  sequence = StringField('Sequence', validators=[Length(min=10, max=200000)])
-  accession_no = StringField('Accession number', validators=[Length(max=20)])
+  seq = StringField('Sequence', validators=[Length(min=10, max=200000)])
+  acc_no = StringField('Accession number', validators=[Length(max=20)])
   date = DateField('Date')
   title = StringField('Article title', validators=[Length(max=500)])
   doi = StringField('DOI', validators=[InputRequired(), Length(max=100)]) 
@@ -80,7 +101,7 @@ class SubmitForm(FlaskForm):
   issue = IntegerField('Issue', validators=[NumberRange(min=1)])
   journal_date = DateField('Article date')
   page_from = IntegerField('Page from', validators=[NumberRange(min=1)])
-  page_to = IntegerField('Page to', validators=[NumberRange(min=1)])
+  page_to = IntegerField('Page to', validators=[Optional(), NumberRange(min=1)])
   #occurrence field
   time = DateTimeField('Occurrence time')
   occ_type = SelectField(u'Occurrence type', choices=['preserved specimen', 'human observation', 'machine observation'])
@@ -208,7 +229,7 @@ def login():
       session['user'] = { 'username': user.uname , 'email': user.email}
       # session['user']['email'] = user.email
       if user.password == pwd:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard', uname=uid))
     return '<h1> Invalid username or password </h1>'
   return render_template('login.html', form=form)
 
@@ -219,11 +240,11 @@ def logout():
     return redirect('/index')
 
 # Example of adding new data to the database
-@app.route('/add', methods=['GET'])
-def add():
-  name = request.form['name']
-  g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
-  return redirect('/')
+# @app.route('/add', methods=['GET'])
+# def add():
+#   name = request.form['name']
+#   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
+#   return redirect('/')
 
 # Users logging into the database
 # @app.route('/login/submit', methods=['GET'])
@@ -232,21 +253,32 @@ def add():
 #   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
 #   return redirect('/')
 
-# # Searching for sequence and occurrence in database
-# @app.route('/add', methods=['POST'])
-# def add():
-#   name = request.form['name']
-#   g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
-#   return redirect('/')
-
-@app.route('/dashboard')
-def dashboard():
+@app.route('/<uname>/dashboard', methods=['GET', 'POST'])
+def dashboard(uname):
   if not 'user' in session:
     return redirect('/login')
-  return render_template('dashboard.html', name=session['user']['username'])
+  uname = session['user']['username']
+  return render_template('dashboard.html', uname=session['user']['username'])
 
-@app.route('/dashboard/history', methods=['GET'])
-def history():
+@app.route('/<uname>/profile', methods=['GET', 'POST'])
+def profile(uname):
+  if not 'user' in session:
+    return redirect('/login')
+  uname = session['user']['username']
+  cursor = g.conn.execute("SELECT * FROM User_From WHERE email=%s", session['user']['email'])
+  user_data = []
+  for result in cursor:
+    user_data.append(result)
+  cursor.close()
+  cursor = g.conn.execute("SELECT * FROM Institution WHERE iname=%s", user_data[5])
+  inst_data = []
+  for result in cursor:
+    inst_data.append(result)
+  cursor.close()
+  return render_template('profile.html', uname=session['user']['username'], user_data=user_data, inst_data=inst_data)
+
+@app.route('/<uname>/history', methods=['GET'])
+def history(uname):
   if not 'user' in session:
     return redirect('/login')
   cursor = g.conn.execute("SELECT genus, species, time FROM Access WHERE email=%s", session['user']['email'])
@@ -256,8 +288,8 @@ def history():
   cursor.close()
   return render_template('history.html', hist=hist)
 
-@app.route('/submit', methods=['GET', 'POST'])
-def submit():
+@app.route('/<uname>/submit', methods=['GET', 'POST'])
+def submit(uname):
   if not 'user' in session:
     return redirect('/login')
   error = None
@@ -270,23 +302,26 @@ def submit():
     family = form.family.data
     genus = form.genus.data
     species = form.species.data
-    sequence_type = form.sequence_type.data
-    bp = form.bp.data
-    sequence = form.sequence.data
-    accession_no = form.accession_no.data
-    title = form.title.data
-    doi = form.doi.data
-    author = form.author.data
-    journal = form.journal.data
-    volume = form.volume.data
-    issue = form.issue.data
-    journal_date = form.journal_date.data
-    page_from = form.page_from.data
-    page_to = form.page_to.data
-    time = form.time.data
-    occ_type = form.occ_type.data
-    latitude = form.latitude.data
-    longitude = form.longitude.data
+    seq_type = request.form['seq_type']
+    bp = request.form['bp']
+    seq = request.form['seq']
+    acc_no = request.form['acc_no']
+    title = request.form['title']
+    doi = request.form['doi']
+    author = request.form['author']
+    journal = request.form['journal']
+    volume = request.form['volume']
+    issue = request.form['issue']
+    journal_date = request.form['journal_date']
+    page_from = request.form['page_from']
+    page_to = request.form['page_to']
+    time = request.form['time']
+    occ_type = request.form['occ_type']
+    location = request.form['location']
+    latitude = request.form['latitude']
+    longitude = request.form['longitude']
+    occurrence = int(request.form['occurrence'])
+    sequence = int(request.form['sequence'])
 
     # org = g.conn.execute('SELECT * FROM Organism WHERE genus=%s AND species=%s', genus, species).first()
     # e = g.conn.execute('SELECT * FROM user_from WHERE email=%s', email).first()
@@ -299,27 +334,16 @@ def submit():
 
     g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
     
-    # if inst == 1:
-    g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, %s, %s)', sequence_type, bp, sequence, accession_no, date, doi)
-    g.conn.execute('INSERT INTO Reference VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)', title, doi, author, journal, volume, issue, journal_date, page_from, page_to)
-    g.conn.execute('INSERT INTO Has VALUES(%s, %s, %s)', genus, species, accession_no)
-    g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, %s)', session['user']['email'], genus, species, accession_no, NOW())
-  # else:
-    g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
-    g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, %s)', session['user']['email'], time, latitude, longitude, genus, species, NOW())
-    return redirect(url_for('home'))
+    if sequence:
+      g.conn.execute('INSERT INTO Reference VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)', title, doi, author, journal, volume, issue, journal_date, page_from, page_to)
+      g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, NOW()::date, %s)', seq_type, bp, seq, acc_no, doi)
+      g.conn.execute('INSERT INTO Has VALUES(%s, %s, %s)', genus, species, acc_no)
+      g.conn.execute('INSERT INTO Submit_Sqn VALUES(%s, %s, %s, %s, NOW()::date)', session['user']['email'], genus, species, acc_no)
+    if occurrence:
+      g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
+      g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, NOW()::date)', session['user']['email'], time, latitude, longitude, genus, species)
+    return redirect(url_for('dashboard', uname=session['user']['username']))  
   return render_template('submit.html', error=error, form=form)
-
-# @app.route('/user/<uid>)
-# def show_user(uid):
-#   uid = session['user']['username']
-#   cursor = g.conn.execute("SELECT name FROM test WHERE id={uid}".format(uid=uid))
-#   names = []
-#   for result in cursor:
-#   names.append(result["name"])
-#   cursor.close()
-#   context = dict(data = names)
-# return render_template("user_profile.html", **context)
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
@@ -365,7 +389,10 @@ def onereference():
 @app.route('/homesearch', methods=['GET', 'POST'])
 def homesearch():
   if request.method == 'POST':
-    s = request.form['species']
+    gs = (request.form['genusspecies'])
+    gs = gs.split()
+    gen = gs[0]
+    s = gs[1]
     occ = request.form['occurrence']
     seq = request.form['sequence']
     occ = int(occ)
@@ -375,35 +402,164 @@ def homesearch():
     otbl = []
 
     if (occ and seq) or (not occ and not seq):
-      cursor = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s)
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         has.append(n)
       cursor.close()
       for no in has:
-        stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
-      cursor = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s)
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)', no[0]).first()
+        cursor = g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)', no[0], ref[0])
+        val = cursor.first()
+        stbl += [val]
+        cursor.close()
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         otbl.append(n)
       cursor.close()
       return render_template('search.html', stbl=stbl, otbl=otbl)
 
     elif occ:
-      cursor = g.conn.execute('SELECT * FROM occ_records WHERE species=(%s)', s)
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         otbl.append(n)
       cursor.close()
       return render_template('search.html', otbl=otbl)
 
     elif seq:
-      cursor = g.conn.execute('SELECT accession_no FROM has WHERE species=(%s)', s)
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         has.append(n)
       cursor.close()
       for no in has:
-        stbl += [g.conn.execute('SELECT * FROM sequence_source WHERE accession_no=(%s)', no).first()]
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)', no[0]).first()
+        cursor = g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
+                                no[0], ref[0])
+        val = cursor.first()
+        stbl += [val]
+        cursor.close()
       return render_template('search.html', stbl=stbl)
 
   return redirect('/')
+
+@app.route('/advancesearch', methods=['GET', 'POST'])
+def advancesearch():
+  error = None
+  form = SearchForm()
+  form.kings.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (kingdom) kingdom FROM organism')]
+  form.phys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (phylum) phylum FROM organism')]
+  form.cls.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (class) class FROM organism')]
+  form.ords.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (orders) orders FROM organism')]
+  form.fams.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (family) family FROM organism')]
+  form.gens.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (genus) genus FROM organism')]
+  form.spes.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (species) species FROM organism')]
+  form.stys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (type) type FROM sequence_source')]
+  form.bps.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (bp) bp FROM sequence_source')]
+  form.otys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (type) type FROM occ_records')]
+  form.locs.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (location) location FROM occ_records')]
+  
+  if form.validate_on_submit():
+    l=[]
+    stbl = []
+    otbl = []
+    dorg = {"kingdom":(form.king.data,form.kings.data), "phylum":(form.phy.data,form.phys.data), "class":(form.cl.data,form.cls.data),
+            "orders":(form.ord.data,form.ords.data), "family":(form.fam.data,form.fams.data), "genus":(form.gen.data,form.gens.data),
+            "species":(form.spe.data,form.spes.data)}
+    dseq = {'1':(form.sty.data,form.stys.data), '2':(form.bp.data,form.bps.data)}
+    docc = {'1':(form.oty.data,form.otys.data), '2':(form.loc.data,form.locs.data)}
+
+    for data in dorg.keys():
+      if dorg[data][0] == True:
+        pred = dorg[data][1]
+        search = data
+        l = [x for x in g.conn.execute('SELECT genus, species FROM organism WHERE '+search+ '=(%s)', pred)]
+        break
+    if form.seq.data:
+      if l:
+        t = [x for x in g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', l[0][0], l[0][1])]
+      else:
+        t = [x for x in g.conn.execute('SELECT accession_no FROM has')]
+
+      if dseq['1'][0] and dseq['2'][0]:
+        for no in t:
+          ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s) and type=(%s) and bp=(%s)',
+                               no[0], dseq['1'][1], dseq['2'][1]).first()
+          stbl += [g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and n.type=(%s) and n.bp=(%s) and r.doi=(%s)',
+                                  no[0], dseq['1'][1], dseq['2'][1], ref[0]).first()]
+      elif dseq['1'][0]:
+        for no in t:
+          ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s) and type=(%s)',
+                               no[0], dseq['1'][1]).first()
+          stbl += [g.conn.execute(
+            'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and n.type=(%s) and r.doi=(%s)',
+            no[0], dseq['1'][1], ref[0]).first()]
+      elif dseq['2'][0]:
+        for no in t:
+          ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s) and bp=(%s)',
+                               no[0], dseq['2'][1]).first()
+          stbl += [g.conn.execute(
+            'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and n.bp=(%s) and r.doi=(%s)',
+            no[0], dseq['2'][1], ref[0]).first()]
+
+      else:
+        for no in t:
+          ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)',
+                               no[0]).first()
+          stbl += [g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
+            no[0], ref[0]).first()]
+
+    if form.occ.data:
+      if l:
+        if docc['1'][0] and docc['2'][0]:
+          otbl += [x for x in g.conn.execute(
+            'SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s) and location=(%s)',
+            l[0][0], l[0][1], docc['1'][1], docc['2'][1])]
+        elif docc['1'][0]:
+          otbl += [x for x in
+                   g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and type=(%s)',
+                                  l[0][0], l[0][1], docc['1'][1])]
+
+        elif docc['2'][0]:
+          otbl += [x for x in
+                   g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s) and location=(%s) ',
+                                  l[0][0], l[0][1], docc['2'][1])]
+
+        else:
+          otbl += [x for x in g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', l[0][0], l[0][1])]
+
+      else:
+        if docc['1'][0] and docc['2'][0]:
+          otbl += [x for x in g.conn.execute(
+            'SELECT * FROM occ_records WHERE type=(%s) and location=(%s)', docc['1'][1], docc['2'][1])]
+        elif docc['1'][0]:
+          otbl += [x for x in
+                   g.conn.execute('SELECT * FROM occ_records WHERE type=(%s)',docc['1'][1])]
+
+        elif docc['2'][0]:
+          otbl += [x for x in
+                   g.conn.execute('SELECT * FROM occ_records WHERE location=(%s) ', docc['2'][1])]
+
+        else:
+          otbl += [x for x in g.conn.execute('SELECT * FROM occ_records')]
+
+    if form.seq.data == False and form.occ.data == False:
+      if l:
+        t = [x for x in g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', l[0][0], l[0][1])]
+        otbl += [x for x in
+                 g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', l[0][0], l[0][1])]
+      else:
+        t = [x for x in g.conn.execute('SELECT accession_no FROM has')]
+        otbl += [x for x in g.conn.execute('SELECT * FROM occ_records')]
+
+      for no in t:
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)',
+                             no[0]).first()
+        stbl += [g.conn.execute(
+          'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
+          no[0], ref[0]).first()]
+
+    return render_template('search.html', stbl=stbl, otbl=otbl)
+  return render_template('advancesearch.html', error=error, form=form)
+
 
 if __name__ == "__main__":
   import click

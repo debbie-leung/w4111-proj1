@@ -4,7 +4,8 @@
 {% block content %}
 <head>
     <style> table, tr, td, th { border: 1px solid black;
-    padding : 8px;}
+    padding : 8px; }
+    #t01 {padding-right: 10px;}
     </style>
 </head>
 
@@ -26,8 +27,11 @@
 
 <div class="container">
     <h2>Search Results</h2>
+    {% if (not otbl) and (not stbl) %}
+    <p>No occurrence or sequence related to this genus species</p>
+    {% endif%}
     {% if otbl %}
-    <table style="width:50%"><caption>Occurrence Data</caption>
+    <table><caption>Occurrence Data</caption>
         <thead>
             <tr><th>Time</th>
                 <th>Type</th>
@@ -50,30 +54,40 @@
         </tbody>
     </table>
     {% if stbl %}
-    <table><caption>Sequence Data</caption>
+    <div style="overflow-x:auto;">
+        <font size="2"><table><caption>Sequence Data</caption>
         <thead>
-            <tr><th>Type</th>
+            <tr><th colspan="6">Sequence</th><th colspan="8">Reference</th></tr>
+            <tr><th>DOI</th>
+                <th>Type</th>
                 <th>BP</th>
                 <th>Sequence</th>
                 <th>Accession_No</th>
                 <th>Date</th>
-                <th>DOI</th>
+
+                <th>Title</th>
+                <th>Author</th>
+                <th>Journal</th>
+                <th>Volume</th>
+                <th>Issue</th>
+                <th>Date</th>
+                <th>Page From</th>
+                <th>Page To</th>
+
             </tr>
         </thead>
         <tbody>
 
             {% for item in stbl%}
             <tr>{% for elem in item%}
-                {% if loop.last%}
-                <td><a href="/onereference">{{elem}}</a></td>
-                {% else %}
-                <td>{{elem}}</td>
-                {%endif%}
+                <td width="100" height="80"><div style="width: 100px; height: 80px; overflow: auto">{{elem}}</div></td>
                 {% endfor %}
             </tr>
             {% endfor %}
             {% endif %}
         </tbody>
     </table>
+            </font>
+        </div>
 </div>
 {% endblock %}
