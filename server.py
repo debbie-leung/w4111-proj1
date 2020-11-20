@@ -412,7 +412,7 @@ def submit(uname):
       g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
       g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, NOW()::date)', session['user']['email'], time, latitude, longitude, genus, species)
     return redirect(url_for('dashboard', uname=session['user']['username']))  
-  return render_template('submit.html', error=error, otype = otype, location=location)
+  return render_template('submit.html', error=error, otype = otype, location=location, uname=session['user']['username'])
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
