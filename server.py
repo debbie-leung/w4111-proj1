@@ -259,14 +259,79 @@ def dashboard(uname):
 def profile(uname):
   if not 'user' in session:
     return redirect('/login')
+
+  if request.method == 'POST':
+    pwd = ''
+    inst = ''
+    dep =''
+    lab = ''
+    div = ''
+    pos = ''
+    st = ''
+    zc = ''
+    coun = ''
+
+    if 'password' in request.form:
+      pwd = request.form['password']
+    if 'institution' in request.form:
+      inst = request.form['institution']
+    if 'department' in request.form:
+      dep = request.form['department']
+    if 'lab' in request.form:
+      lab = request.form['lab']
+    if 'division' in request.form:
+      div = request.form['division']
+    if 'position' in request.form:
+      pos = request.form['position']
+    if 'state' in request.form:
+      st = request.form['state']
+    if 'zipcode' in request.form:
+      zc = request.form['zipcode']
+    if 'country' in request.form:
+      coun = request.form['country']
+
+    if pwd:
+      g.conn.execute('UPDATE user_from SET password=(%s) WHERE uname=(%s)', pwd, session['user']['username'])
+
+    if inst:
+      itbl = g.conn.execute("SELECT * FROM User_From WHERE email=(%s)", session['user']['email']).first()
+      g.conn.execute('UPDATE institution SET iname=(%s) WHERE iname=(%s)', inst, itbl[5])
+      g.conn.execute('UPDATE user_from SET iname=(%s) WHERE uname=(%s)', inst, session['user']['username'])
+
+    if dep:
+      itbl = g.conn.execute("SELECT * FROM User_From WHERE email=(%s)", session['user']['email']).first()
+      g.conn.execute('UPDATE university SET department=(%s) WHERE iname=(%s)', dep, itbl[5])
+
+    if lab:
+      itbl = g.conn.execute("SELECT * FROM User_From WHERE email=(%s)", session['user']['email']).first()
+      g.conn.execute('UPDATE university SET lab=(%s) WHERE iname=(%s)', lab, itbl[5])
+
+    if div:
+      itbl = g.conn.execute("SELECT * FROM User_From WHERE email=(%s)", session['user']['email']).first()
+      g.conn.execute('UPDATE organisation SET division=(%s) WHERE iname=(%s)', div, itbl[5])
+
+    if pos:
+      g.conn.execute('UPDATE user_from SET position=(%s) WHERE uname=(%s)', pos, session['user']['username'])
+
+    if st:
+      itbl = g.conn.execute("SELECT * FROM User_From WHERE email=(%s)", session['user']['email']).first()
+      g.conn.execute('UPDATE institution SET state=(%s) WHERE iname=(%s)', st, itbl[5])
+
+    if zc:
+      itbl = g.conn.execute("SELECT * FROM User_From WHERE email=(%s)", session['user']['email']).first()
+      g.conn.execute('UPDATE institution SET zipcode=(%s) WHERE iname=(%s)', zc, itbl[5])
+
+    if coun:
+      itbl = g.conn.execute("SELECT * FROM User_From WHERE email=(%s)", session['user']['email']).first()
+      g.conn.execute('UPDATE institution SET country=(%s) WHERE iname=(%s)', inst, itbl[5])
+      g.conn.execute('UPDATE user_from SET country=(%s) WHERE uname=(%s)', inst, session['user']['username'])
+
   uname = session['user']['username']
   cursor = g.conn.execute("SELECT * FROM User_From WHERE email=%s", session['user']['email'])
   user_data = []
   for result in cursor:
     user_data.append(result)
   cursor.close()
-  print(user_data)
-  print(user_data[0][5])
   cursor = g.conn.execute("SELECT state, zipcode FROM User_From u NATURAL JOIN Institution i WHERE u.iname=%s", user_data[0][5])
   inst_data = []
   for result in cursor:
@@ -282,7 +347,9 @@ def profile(uname):
   for result in cursor:
     org_data.append(result)
   cursor.close()
+
   return render_template('profile.html', uname=session['user']['username'], user_data=user_data, inst_data=inst_data, uni_data=uni_data, org_data=org_data)
+
 
 @app.route('/<uname>/history', methods=['GET'])
 def history(uname):
