@@ -44,6 +44,12 @@ class RegistrationForm(FlaskForm):
   department = StringField('Department', validators=[Length(max=20)])
   lab = StringField('Lab', validators=[Length(max=20)])
 
+class VoteForm(FlaskForm):
+  gen = BooleanField('Genus')
+  gens = SelectField('Genus Selection')
+  spe = BooleanField('Species')
+  spes = SelectField('Species Selection')
+
 class SearchForm(FlaskForm):
   king = BooleanField('Kingdom')
   kings = SelectField('Kingdom Selection')
@@ -689,6 +695,14 @@ def loginadvsearch(uname):
 @app.route('/advancesearch', methods=['GET', 'POST'])
 def unloggedadvsearch():
   return loginadvsearch(None)
+
+
+@app.route('/<uname>/vote', methods=['GET', 'POST'])
+def vote():
+  form = VoteForm()
+  form.gens.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (genus) genus FROM organism')]
+  form.spes.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (species) species FROM organism')]
+  pass
 
 if __name__ == "__main__":
   import click
