@@ -25,9 +25,9 @@ app.config['SECRET_KEY'] = os.urandom(24)
 Bootstrap(app)
 
 class LoginForm(FlaskForm):
-  username = StringField('username', validators=[InputRequired()])
-  password = PasswordField('password', validators=[InputRequired()])
-  remember = BooleanField('remember me')
+  username = StringField('Username', validators=[InputRequired()])
+  password = PasswordField('Password', validators=[InputRequired()])
+  remember = BooleanField('Remember me')
 
 class RegistrationForm(FlaskForm):
   uname = StringField('Username', validators=[InputRequired(), Length(max=20)])
