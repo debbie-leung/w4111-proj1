@@ -794,6 +794,21 @@ def advancesearch():
 
 @app.route('/<uname>/vote', methods=['GET', 'POST'])
 def vote(uname):
+  if 'user' not in session:
+    redirect('/login')
+
+  if request.method == 'POST':
+
+    vote = request.form['vote']
+    no = request.form['no']
+    print(no)
+    print(vote)
+    uname = session['user']['username']
+
+    #lstt = [x for x in g.conn.execute('SELECT genus, species FROM has WHERE accession_no=(%s)', no)]
+
+    #if g.conn.execute('SELECT * FROM vote WHERE genus=(%s) and species=(%s)', )
+
   pass
 
 

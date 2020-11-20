@@ -105,17 +105,16 @@ Dashboard
 
             {% for item in stbl%}
             <tr>
-
                 {% for elem in item%}
                 {% if loop.index == 4 %}
                 {% set temp = elem %}
-                <td width="100" height="120"><div style="width: 100px; height: 120px; overflow: auto">{{elem}}</div></td>
                 {% endif %}
+                <td width="100" height="120"><div style="width: 100px; height: 120px; overflow: auto">{{elem}}</div></td>
                 {% endfor %}
                 <td>
-                    <form action="/{{uname}}/vote" method="POST" class="form">
-                        <input type="radio"  id="up" name="vote"><span class="glyphicon glyphicon-thumbs-up"></span></input>
-                        <input type="radio"  id="down" name="vote"><span class="glyphicon glyphicon-thumbs-down"></span></input>
+                    <form action="/{{uname}}/vote" method="POST" class="form" id="form1">
+                        <input type="radio"  id="up" name="vote" onclick="submitVote()" value="up"><span class="glyphicon glyphicon-thumbs-up"></span></input>
+                        <input type="radio"  id="down" name="vote" onclick="submitVote" value="down"><span class="glyphicon glyphicon-thumbs-down"></span></input>
                         <input type="hidden" id="no" name="no" value="{{temp}}">
                     </form>
                 </td>
@@ -129,3 +128,7 @@ Dashboard
 </div>
 {% endblock %}
 
+<script>
+    function submitupVote() {
+    document.getElementById("form1").submit();}
+</script>
