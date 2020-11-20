@@ -270,12 +270,12 @@ def profile(uname):
   for result in cursor:
     user_data.append(result)
   cursor.close()
-  cursor = g.conn.execute("SELECT * FROM Institution WHERE iname=%s", user_data[5])
-  inst_data = []
-  for result in cursor:
-    inst_data.append(result)
-  cursor.close()
-  return render_template('profile.html', uname=session['user']['username'], user_data=user_data, inst_data=inst_data)
+  # cursor = g.conn.execute("SELECT * FROM Institution WHERE iname=%s", user_data[5])
+  # inst_data = []
+  # for result in cursor:
+  #   inst_data.append(result)
+  # cursor.close()
+  return render_template('profile.html', uname=session['user']['username'], user_data=user_data)#, inst_data=inst_data)
 
 @app.route('/<uname>/history', methods=['GET'])
 def history(uname):
@@ -378,7 +378,7 @@ def register():
       g.conn.execute('INSERT INTO university(iname, country, department, lab) VALUES(%s, %s, %s, %s)', iname, coun, dept, lab)
     else:
       g.conn.execute('INSERT INTO organisation(iname, country, division) VALUES(%s, %s, %s)',iname, coun, div)
-    return redirect(url_for('home'))
+    return redirect(url_for('login'))
   return render_template('registration.html', error=error, form=form)
 
 @app.route('/onereference', methods=['GET', 'POST'])
