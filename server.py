@@ -265,12 +265,24 @@ def profile(uname):
   for result in cursor:
     user_data.append(result)
   cursor.close()
-  # cursor = g.conn.execute("SELECT * FROM Institution WHERE iname=%s", user_data[5])
-  # inst_data = []
-  # for result in cursor:
-  #   inst_data.append(result)
-  # cursor.close()
-  return render_template('profile.html', uname=session['user']['username'], user_data=user_data)#, inst_data=inst_data)
+  print(user_data)
+  print(user_data[0][5])
+  cursor = g.conn.execute("SELECT state, zipcode FROM User_From u NATURAL JOIN Institution i WHERE u.iname=%s", user_data[0][5])
+  inst_data = []
+  for result in cursor:
+    inst_data.append(result)
+  cursor.close()
+  cursor = g.conn.execute("SELECT department, lab FROM Institution i NATURAL JOIN University u WHERE i.iname=%s", user_data[0][5])
+  uni_data = []
+  for result in cursor:
+    uni_data.append(result)
+  cursor.close()
+  cursor = g.conn.execute("SELECT division FROM Institution i NATURAL JOIN Organisation o WHERE i.iname=%s", user_data[0][5])
+  org_data = []
+  for result in cursor:
+    org_data.append(result)
+  cursor.close()
+  return render_template('profile.html', uname=session['user']['username'], user_data=user_data, inst_data=inst_data, uni_data=uni_data, org_data=org_data)
 
 @app.route('/<uname>/history', methods=['GET'])
 def history(uname):
