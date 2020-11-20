@@ -404,11 +404,70 @@ def homesearch():
     has = []
     otbl = []
 
-    if 'user' in session:
-      h = 'loginsearch.html'
-      t = datetime.datetime.now()
-    else:
-      h = 'search.html'
+    if (occ and seq) or (not occ and not seq):
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
+      for n in cursor:
+        has.append(n)
+      cursor.close()
+      for no in has:
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)', no[0]).first()
+        cursor = g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)', no[0], ref[0])
+        val = cursor.first()
+        stbl += [val]
+        cursor.close()
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
+      for n in cursor:
+        otbl.append(n)
+      cursor.close()
+      if 'user' in session and (stbl or otbl):
+        usere = session['user']['email']
+        g.conn.execute('INSERT INTO history(time) VALUES(%s)', t)
+        g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, gen, s, t)
+
+      return render_template('search.html', stbl=stbl, otbl=otbl)
+
+    elif occ:
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
+      for n in cursor:
+        otbl.append(n)
+      cursor.close()
+
+      return render_template('search.html', otbl=otbl)
+
+    elif seq:
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
+      for n in cursor:
+        has.append(n)
+      cursor.close()
+      for no in has:
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)', no[0]).first()
+        cursor = g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
+                                no[0], ref[0])
+        val = cursor.first()
+        stbl += [val]
+        cursor.close()
+
+      return render_template('search.html', stbl=stbl)
+
+  return redirect('/')
+
+@app.route('/<uname>/loginsearch', methods=['GET', 'POST'])
+def loginsearch(uname):
+  if not 'user' in session:
+    return redirect('/login')
+  if request.method == 'POST':
+    gs = (request.form['genusspecies'])
+    gs = gs.split()
+    gen = gs[0]
+    s = gs[1]
+    occ = request.form['occurrence']
+    seq = request.form['sequence']
+    occ = int(occ)
+    seq = int(seq)
+    stbl = []
+    has = []
+    otbl = []
+    t = datetime.datetime.now()
 
     if (occ and seq) or (not occ and not seq):
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
@@ -430,7 +489,7 @@ def homesearch():
         g.conn.execute('INSERT INTO history(time) VALUES(%s)', t)
         g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, gen, s, t)
 
-      return render_template(h, stbl=stbl, otbl=otbl)
+      return render_template('loginsearch.html', stbl=stbl, otbl=otbl)
 
     elif occ:
       cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
@@ -438,7 +497,7 @@ def homesearch():
         otbl.append(n)
       cursor.close()
 
-      return render_template(h, otbl=otbl)
+      return render_template('loginsearch.html', otbl=otbl)
 
     elif seq:
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
@@ -453,12 +512,14 @@ def homesearch():
         stbl += [val]
         cursor.close()
 
-      return render_template(h, stbl=stbl)
+      return render_template('loginsearch.html', stbl=stbl)
 
   return redirect('/')
 
 @app.route('/<uname>/loginadvsearch', methods=['GET', 'POST'])
 def loginadvsearch(uname):
+  if not 'user' in session:
+    return redirect('/login')
   error = None
   form = SearchForm()
   form.kings.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (kingdom) kingdom FROM organism')]
