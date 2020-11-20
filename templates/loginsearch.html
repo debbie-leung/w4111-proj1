@@ -1,29 +1,52 @@
 {% extends "bootstrap/base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+<link rel="stylesheet" href="{{url_for('.static', filename='dashboard.css')}}">
+{% endblock %}
 
 {% block content %}
-<head>
-    <style> table, tr, td, th { border: 1px solid black;
-    padding : 8px; }
-    #t01 {padding-right: 10px;}
-    </style>
-</head>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">GenBio</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="#">Settings</a></li>
+            <li><a href="#">Profile</a></li>
+            <li><a href="/">Log Out</a></li>
+          </ul>
+          <form method="POST" action="/homesearch"  class="navbar-form navbar-right">
+            <input  type="text" name="genusspecies" class="form-control" placeholder="Genus Species">
+            <input type="hidden" id="occh" name="occurrence" value="0"/>
+            <input type="hidden" id="seqh" name="sequence" value="0"/>
+          </form>
+        </div>
+      </div>
+    </nav>
 
-<nav class="navbar navbar-inverse">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="#">GenBio</a>
-    </div>
-    <ul class="nav navbar-nav">
-      <li class="active">
-      <li><a href="/">Home</a></li>
-    </ul>
-    <ul class="nav navbar-nav navbar-right">
-      <li><a href="registration"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
-      <li><a href="login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-    </ul>
-  </div>
-</nav>
+    <div class="container-fluid">
+        <div class="row">
+          <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+              <li class="active"><a href="dashboard">Overview <span class="sr-only">(current)</span></a></li>
+              <li><a href="loginadvsearch">Advance Search</a></li>
+              <li><a href="submit">Submit</a></li>
+              <li><a href="history">History</a></li>
+            </ul>
+          </div>
 
 <div class="container">
     <h2>Search Results</h2>
@@ -90,6 +113,4 @@
             </font>
         </div>
 </div>
-
-
 {% endblock %}

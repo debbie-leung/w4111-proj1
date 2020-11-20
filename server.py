@@ -18,6 +18,7 @@ from flask_wtf import FlaskForm
 from country_list import countries_for_language
 from wtforms import StringField, PasswordField, BooleanField, IntegerField, SelectField, FormField, DateField, DateTimeField, FloatField, SelectField, SelectMultipleField
 from wtforms.validators import InputRequired, Email, Length, NumberRange, Optional
+import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -34,20 +35,14 @@ class RegistrationForm(FlaskForm):
   email = StringField('Email', validators=[InputRequired(), Email(), Length(max=50)])
   password = PasswordField('Password', validators=[InputRequired(), Length(max=20)])
   institution = SelectField('institution', choices=[(1,'University'),(0,'Organization')], coerce=int)
-  since = DateField('since')
-  position = StringField('Position', validators=[Length(max=20)])
-  iname = StringField('institution name', validators=[InputRequired(),Length(max=50)])
-  country = StringField('country', validators=[InputRequired(), Length(max=20)])
-  state = StringField('state', validators=[Length(max=20)])
-  zipcode = IntegerField('zipcode', validators=[NumberRange(min=9999, max=99999)])
-  division = StringField('division', validators=[Length(max=20)])
-  department = StringField('department', validators=[Length(max=20)])
-  lab = StringField('lab', validators=[Length(max=20)])
-
-class HomeSearchForm(FlaskForm):
-  occ = BooleanField('occurance', default="checked")
-  seq = BooleanField('sequence', default="checked")
-  species = StringField('species', validators=[Length(max=20)])
+  position = StringField('Position', validators=[Length(max=20), Optional()])
+  iname = StringField('Institution name', validators=[InputRequired(),Length(max=50)])
+  country = StringField('Country', validators=[InputRequired(), Length(max=20)])
+  state = StringField('State', validators=[Length(max=20)])
+  zipcode = IntegerField('Zipcode', validators=[NumberRange(min=9999, max=99999), Optional()])
+  division = StringField('Division', validators=[Length(max=20)])
+  department = StringField('Department', validators=[Length(max=20)])
+  lab = StringField('Lab', validators=[Length(max=20)])
 
 class SearchForm(FlaskForm):
   king = BooleanField('Kingdom')
@@ -349,7 +344,6 @@ def register():
   error = None
   form = RegistrationForm()
   if form.validate_on_submit():
-    since = form.since.data
     uname = form.uname.data
     email = form.email.data
     pwd = form.password.data
@@ -372,18 +366,18 @@ def register():
       error = '<h1> This email is already registered.</h1>'
       return render_template('registration.html', error=error, form=form)
 
-    g.conn.execute('INSERT INTO institution(iname, country, state, zipcode) VALUES(%s, %s, %s, %s)',iname, coun, st, zcode)
-    g.conn.execute('INSERT INTO user_from(uname, email, password, since, position, iname, country) VALUES(%s, %s, %s, %s, %s, %s, %s)', uname, email, pwd, since, pos, iname, coun)
-    if inst == 1:
-      g.conn.execute('INSERT INTO university(iname, country, department, lab) VALUES(%s, %s, %s, %s)', iname, coun, dept, lab)
-    else:
-      g.conn.execute('INSERT INTO organisation(iname, country, division) VALUES(%s, %s, %s)',iname, coun, div)
-    return redirect(url_for('login'))
-  return render_template('registration.html', error=error, form=form)
+    if not g.conn.execute('SELECT * FROM institution WHERE iname=(%s) and country=(%s)', iname, coun).first():
+      g.conn.execute('INSERT INTO institution(iname, country, state, zipcode) VALUES(%s, %s, %s, %s)',iname, coun, st, zcode)
+      if inst == 1:
+        g.conn.execute('INSERT INTO university(iname, country, department, lab) VALUES(%s, %s, %s, %s)', iname, coun,
+                       dept, lab)
+      else:
+        g.conn.execute('INSERT INTO organisation(iname, country, division) VALUES(%s, %s, %s)', iname, coun, div)
 
-@app.route('/onereference', methods=['GET', 'POST'])
-def onereference():
-  return redirect('/')
+    g.conn.execute('INSERT INTO user_from(uname, email, password, since, position, iname, country) VALUES(%s, %s, %s, now(), %s, %s, %s)', uname, email, pwd, pos, iname, coun)
+
+    return redirect('/login')
+  return render_template('registration.html', error=error, form=form)
 
 @app.route('/homesearch', methods=['GET', 'POST'])
 def homesearch():
@@ -400,6 +394,12 @@ def homesearch():
     has = []
     otbl = []
 
+    if 'user' in session:
+      h = 'loginsearch.html'
+      t = datetime.datetime.now()
+    else:
+      h = 'search.html'
+
     if (occ and seq) or (not occ and not seq):
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
@@ -415,14 +415,20 @@ def homesearch():
       for n in cursor:
         otbl.append(n)
       cursor.close()
-      return render_template('search.html', stbl=stbl, otbl=otbl)
+      if 'user' in session and (stbl or otbl):
+        usere = session['user']['email']
+        g.conn.execute('INSERT INTO history(time) VALUES(%s)', t)
+        g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, gen, s, t)
+
+      return render_template(h, stbl=stbl, otbl=otbl)
 
     elif occ:
       cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
       for n in cursor:
         otbl.append(n)
       cursor.close()
-      return render_template('search.html', otbl=otbl)
+
+      return render_template(h, otbl=otbl)
 
     elif seq:
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
@@ -436,10 +442,12 @@ def homesearch():
         val = cursor.first()
         stbl += [val]
         cursor.close()
-      return render_template('search.html', stbl=stbl)
+
+      return render_template(h, stbl=stbl)
 
   return redirect('/')
 
+@app.route('/loginadvsearch', methods=['GET', 'POST'])
 @app.route('/advancesearch', methods=['GET', 'POST'])
 def advancesearch():
   error = None
@@ -455,11 +463,12 @@ def advancesearch():
   form.bps.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (bp) bp FROM sequence_source')]
   form.otys.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (type) type FROM occ_records')]
   form.locs.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (location) location FROM occ_records')]
-  
+
   if form.validate_on_submit():
     l=[]
     stbl = []
     otbl = []
+
     dorg = {"kingdom":(form.king.data,form.kings.data), "phylum":(form.phy.data,form.phys.data), "class":(form.cl.data,form.cls.data),
             "orders":(form.ord.data,form.ords.data), "family":(form.fam.data,form.fams.data), "genus":(form.gen.data,form.gens.data),
             "species":(form.spe.data,form.spes.data)}
@@ -556,11 +565,24 @@ def advancesearch():
           'SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
           no[0], ref[0]).first()]
 
+    if 'user' in session and (otbl or stbl):
+      tm = datetime.datetime.now()
+      g.conn.execute('INSERT INTO history(time) VALUES(%s)', tm)
+      usere = session['user']['email']
+      if (otbl and stbl) or otbl:
+        for x in otbl:
+          g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, x[5], x[6], tm)
+      elif stbl:
+        for y in stbl:
+          lt = g.conn.execute('SELECT genus, species FROM has WHERE accession_no=(%s)', y[4]).first()
+          g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, lt[0], lt[1], tm)
 
+      return render_template('loginsearch.html', stbl=stbl, otbl=otbl)
 
     return render_template('search.html', stbl=stbl, otbl=otbl)
 
-
+  if 'user' in session:
+    return render_template('loginadvsearch.html', error=error, form=form)
   return render_template('advancesearch.html', error=error, form=form)
 
 
