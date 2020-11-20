@@ -294,7 +294,7 @@ def submit(uname):
     return redirect('/login')
   error = None
   form = SubmitForm()
-  if form.validate_on_submit():
+  if form.validate_on_submit() and request.method == 'POST':
     kingdom = form.kingdom.data
     phylum = form.phylum.data
     org_class = form.org_class.data
@@ -302,10 +302,10 @@ def submit(uname):
     family = form.family.data
     genus = form.genus.data
     species = form.species.data
-    seq_type = request.form['seq_type']
+    seq_type = request.form['seqtype']
     bp = request.form['bp']
     seq = request.form['seq']
-    acc_no = request.form['acc_no']
+    acc_no = request.form['accno']
     title = request.form['title']
     doi = request.form['doi']
     author = request.form['author']
@@ -331,7 +331,7 @@ def submit(uname):
     # if e:
     #   error = '<h1> This email is already registered.</h1>'
     #   return render_template('registration.html', error=error, form=form)
-
+    print("heyYY")
     g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
     
     if sequence:
@@ -342,7 +342,9 @@ def submit(uname):
     if occurrence:
       g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
       g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, NOW()::date)', session['user']['email'], time, latitude, longitude, genus, species)
-    return redirect(url_for('dashboard', uname=session['user']['username']))  
+
+    return redirect(url_for('dashboard', uname=session['user']['username']))
+
   return render_template('submit.html', error=error, form=form)
 
 @app.route("/registration", methods=['GET', 'POST'])
