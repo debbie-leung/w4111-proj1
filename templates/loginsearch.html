@@ -113,9 +113,13 @@ Dashboard
                 {% endfor %}
                 <td>
                     <form action="/{{uname}}/vote" method="POST" class="form" id="form1">
-                        <input type="radio"  id="up" name="vote" onclick="submitVote()" value="up"><span class="glyphicon glyphicon-thumbs-up"></span></input>
-                        <input type="radio"  id="down" name="vote" onclick="submitVote" value="down"><span class="glyphicon glyphicon-thumbs-down"></span></input>
-                        <input type="hidden" id="no" name="no" value="{{temp}}">
+                        <input type="radio" id="up" name="vote" value="up"><span class="glyphicon glyphicon-thumbs-up"></span></input>
+                        <input type="radio" id="down" name="vote" value="down"><span class="glyphicon glyphicon-thumbs-down"></span></input>
+                        <button class="btn btn-primary btn-sm" type="submit">Submit</button>
+                        <input type="hidden" id="accno" name="accno" value="{{temp}}">
+
+                        <!-- <button type="button" class="btn btn-primary" data-toggle="button" name="up" aria-pressed="false" autocomplete="off"><span class="glyphicon glyphicon-thumbs-up"></span></button>
+                        <button type="button" class="btn btn-danger" data-toggle="button" name="down" aria-pressed="false" autocomplete="off"><span class="glyphicon glyphicon-thumbs-down"></span></button> -->
                     </form>
                 </td>
             </tr>
@@ -126,9 +130,17 @@ Dashboard
             </font>
         </div>
 </div>
-{% endblock %}
 
 <script>
-    function submitupVote() {
-    document.getElementById("form1").submit();}
+  // $().button('toggle')
+  // function submitVote() {
+  // document.getElementById("form1").submit();}
+
+  // function buttonClickHandler() {
+  // $.post('/theroutehandler', { 'param1': 'some value', 'param2': 'some value' }, function(data) {
+  //   console.log(data)
+  // });
+  // }
 </script>
+
+{% endblock %}

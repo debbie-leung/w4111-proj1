@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, url_for, session
+from flask import Flask, request, render_template, g, redirect, Response, url_for, session, jsonify
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from country_list import countries_for_language
@@ -215,6 +215,7 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+  error = None
   form = LoginForm()
   if form.validate_on_submit():
     uid = form.username.data
@@ -225,8 +226,8 @@ def login():
       # session['user']['email'] = user.email
       if user.password == pwd:
         return redirect(url_for('dashboard', uname=uid))
-    return '<h1> Invalid username or password </h1>'
-  return render_template('login.html', form=form)
+    error ='Invalid username or password'
+  return render_template('login.html', error=error, form=form)
 
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -347,7 +348,7 @@ def submit(uname):
       g.conn.execute('INSERT INTO Occ_records VALUES(%s, %s, %s, %s, %s, %s, %s)', time, occ_type, location, latitude, longitude, genus, species)
       g.conn.execute('INSERT INTO Submit_Occ VALUES(%s, %s, %s, %s, %s, %s, NOW()::date)', session['user']['email'], time, latitude, longitude, genus, species)
     return redirect(url_for('dashboard', uname=session['user']['username']))  
-  return render_template('submit.html', error=error, form=form)
+  return render_template('submit.html', error=error, form=form, uname=uname)
 
 @app.route("/registration", methods=['GET', 'POST'])
 def register():
@@ -800,17 +801,16 @@ def vote(uname):
   if request.method == 'POST':
 
     vote = request.form['vote']
-    no = request.form['no']
-    print(no)
+    accno = request.form['accno']
+    print(accno)
+    print("result")
     print(vote)
     uname = session['user']['username']
-
+    print("vote")
     #lstt = [x for x in g.conn.execute('SELECT genus, species FROM has WHERE accession_no=(%s)', no)]
 
     #if g.conn.execute('SELECT * FROM vote WHERE genus=(%s) and species=(%s)', )
-
-  pass
-
+  return redirect(url_for('dashboard', uname=uname))
 
 if __name__ == "__main__":
   import click
