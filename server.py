@@ -321,7 +321,7 @@ def submit(uname):
     seq_type = request.form['seq_type']
     bp = request.form['bp']
     seq = request.form['seq']
-    acc_no = request.form['acc_no']
+    acc_no = request.form['accno']
     title = request.form['title']
     doi = request.form['doi']
     author = request.form['author']
