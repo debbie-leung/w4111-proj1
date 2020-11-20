@@ -12,7 +12,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, url_for, session
+from flask import Flask, request, render_template, g, redirect, Response, url_for, session, jsonify, flash
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from country_list import countries_for_language
@@ -215,6 +215,7 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+  error = None
   form = LoginForm()
   if form.validate_on_submit():
     uid = form.username.data
@@ -225,8 +226,8 @@ def login():
       # session['user']['email'] = user.email
       if user.password == pwd:
         return redirect(url_for('dashboard', uname=uid))
-    return '<h1> Invalid username or password </h1>'
-  return render_template('login.html', form=form)
+    error ='Invalid username or password'
+  return render_template('login.html', error=error, form=form)
 
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -406,11 +407,9 @@ def submit(uname):
     for result in cursor:
       org.append(result)
     cursor.close()
-    print(org)
     if not org:
       g.conn.execute('INSERT INTO Organism VALUES(%s, %s, %s, %s, %s, %s, %s)', kingdom, phylum, org_class, order, family, genus, species)
-    print("test2")
-
+  
     if sequence == True:
       g.conn.execute('INSERT INTO Reference VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)', title, doi, author, journal, volume, issue, journal_date, page_from, page_to)
       g.conn.execute('INSERT INTO Sequence_Source VALUES(%s, %s, %s, %s, NOW()::date, %s)', seq_type, bp, seq, acc_no, doi)
@@ -480,11 +479,71 @@ def homesearch(uname):
     has = []
     otbl = []
 
-    if 'user' in session:
-      h = 'loginsearch.html'
-      t = datetime.datetime.now()
-    else:
-      h = 'search.html'
+    if (occ and seq) or (not occ and not seq):
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
+      for n in cursor:
+        has.append(n)
+      cursor.close()
+      for no in has:
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)', no[0]).first()
+        cursor = g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)', no[0], ref[0])
+        val = cursor.first()
+        stbl += [val]
+        cursor.close()
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
+      for n in cursor:
+        otbl.append(n)
+      cursor.close()
+      if 'user' in session and (stbl or otbl):
+        usere = session['user']['email']
+        g.conn.execute('INSERT INTO history(time) VALUES(%s)', t)
+        g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, gen, s, t)
+
+      return render_template('search.html', stbl=stbl, otbl=otbl)
+
+    elif occ:
+      cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
+      for n in cursor:
+        otbl.append(n)
+      cursor.close()
+
+      return render_template('search.html', otbl=otbl)
+
+    elif seq:
+      cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
+      for n in cursor:
+        has.append(n)
+      cursor.close()
+      for no in has:
+        ref = g.conn.execute('SELECT doi FROM sequence_source WHERE accession_no=(%s)', no[0]).first()
+        cursor = g.conn.execute('SELECT * FROM sequence_source n INNER JOIN reference r USING (doi) WHERE n.accession_no=(%s) and r.doi=(%s)',
+                                no[0], ref[0])
+        val = cursor.first()
+        stbl += [val]
+        cursor.close()
+      
+      print(stbl)
+      return render_template('search.html', stbl=stbl)
+
+  return redirect('/')
+
+@app.route('/<uname>/loginsearch', methods=['GET', 'POST'])
+def loginsearch(uname):
+  if not 'user' in session:
+    return redirect('/login')
+  if request.method == 'POST':
+    gs = (request.form['genusspecies'])
+    gs = gs.split()
+    gen = gs[0]
+    s = gs[1]
+    occ = request.form['occurrence']
+    seq = request.form['sequence']
+    occ = int(occ)
+    seq = int(seq)
+    stbl = []
+    has = []
+    otbl = []
+    t = datetime.datetime.now()
 
     if (occ and seq) or (not occ and not seq):
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
@@ -506,7 +565,7 @@ def homesearch(uname):
         g.conn.execute('INSERT INTO history(time) VALUES(%s)', t)
         g.conn.execute('INSERT INTO access(email,genus, species, time) VALUES(%s, %s, %s, %s)', usere, gen, s, t)
 
-      return render_template(h, stbl=stbl, otbl=otbl, uname=uname)
+      return render_template('loginsearch.html', stbl=stbl, otbl=otbl, uname=uname)
 
     elif occ:
       cursor = g.conn.execute('SELECT * FROM occ_records WHERE genus=(%s) and species=(%s)', gen, s)
@@ -514,7 +573,7 @@ def homesearch(uname):
         otbl.append(n)
       cursor.close()
 
-      return render_template(h, otbl=otbl, uname=uname)
+      return render_template('loginsearch.html', otbl=otbl)
 
     elif seq:
       cursor = g.conn.execute('SELECT accession_no FROM has WHERE genus=(%s) and species=(%s)', gen, s)
@@ -529,7 +588,7 @@ def homesearch(uname):
         stbl += [val]
         cursor.close()
 
-      return render_template(h, stbl=stbl, uname=uname)
+      return render_template('loginsearch.html', stbl=stbl)
 
   return redirect('/')
 
@@ -539,6 +598,8 @@ def unloggedhomesearch():
 
 @app.route('/<uname>/loginadvsearch', methods=['GET', 'POST'])
 def loginadvsearch(uname):
+  if not 'user' in session:
+    return redirect('/login')
   error = None
   form = SearchForm()
   form.kings.choices = [x[0] for x in g.conn.execute('SELECT DISTINCT ON (kingdom) kingdom FROM organism')]
@@ -683,7 +744,43 @@ def loginadvsearch(uname):
 @app.route('/advancesearch', methods=['GET', 'POST'])
 def unloggedadvsearch():
   return loginadvsearch(None)
+  
+@app.route('/<uname>/vote', methods=['GET', 'POST'])
+def vote(uname):
+  if 'user' not in session:
+    redirect('/login')
 
+  if request.method == 'POST':
+    error = None
+    vote = request.form['vote']
+    accno = request.form['accno']
+    uname = session['user']['username']
+    #lstt = [x for x in g.conn.execute('SELECT genus, species FROM has WHERE accession_no=(%s)', no)]
+
+    cursor = g.conn.execute("SELECT upvote, downvote FROM Vote WHERE accession_no=%s", accno)
+    boolean = []
+    for result in cursor:
+      boolean.append(result)
+    cursor.close()
+    if boolean:
+      print(boolean)
+      flash('You have previously voted for this organisms sequence and cannot revote.')
+    elif not boolean:
+      cursor = g.conn.execute("SELECT genus, species FROM Has WHERE accession_no=%s", accno)
+      animal = []
+      for result in cursor:
+        animal.append(result)
+      cursor.close()
+      genus = animal[0][0]
+      species = animal[0][1]
+      if vote == "up":
+        g.conn.execute('INSERT INTO Vote VALUES(%s, %s, %s, %s, NOW()::date, %s, %s)', session['user']['email'], genus, species, accno, '1', '0')
+      elif vote == "down":
+        g.conn.execute('INSERT INTO Vote VALUES(%s, %s, %s, %s, NOW()::date, %s, %s)', session['user']['email'], genus, species, accno, '0', '1')
+    # print(stbl)
+    # return render_template('loginsearch.html', uname=session['user']['username'], error=error, stbl=stbl)
+  return redirect(url_for('dashboard', uname=uname))
+  
 if __name__ == "__main__":
   import click
 

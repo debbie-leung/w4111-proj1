@@ -26,7 +26,7 @@ Dashboard
             <li><a href="profile">Profile</a></li>
             <li><a href="/logout">Log Out</a></li>
           </ul>
-          <form method="POST" action="/{{uname}}/homesearch"  class="navbar-form navbar-right">
+          <form method="POST" action="{{ url_for('loginsearch',uname=uname) }}"  class="navbar-form navbar-right">
             <input  type="text" name="genusspecies" class="form-control" placeholder="Genus species">
             <input type="hidden" id="occh" name="occurrence" value="0"/>
             <input type="hidden" id="seqh" name="sequence" value="0"/>
@@ -79,7 +79,8 @@ Dashboard
         <font size="2"><table><caption>Sequence Data</caption>
         <thead>
             <tr><th colspan="6">Sequence</th><th colspan="8">Reference</th></tr>
-            <tr><th>DOI</th>
+            <tr>
+                <th>DOI</th>
                 <th>Type</th>
                 <th>BP</th>
                 <th>Sequence</th>
@@ -94,23 +95,56 @@ Dashboard
                 <th>Date</th>
                 <th>Page From</th>
                 <th>Page To</th>
+                <th>Vote</th>
 
             </tr>
         </thead>
         <tbody>
 
             {% for item in stbl%}
-            <tr>{% for elem in item%}
+            <tr>
+                {% for elem in item%}
+                {% if loop.index == 5 %}
+                <form action="/{{uname}}/vote" method="POST" class="form" id="form1">
+                {% set temp = elem %}
+                <input type="hidden" id="accno" name="accno" value="{{temp}}">
+                {% endif %}
                 <td width="100" height="120"><div style="width: 100px; height: 120px; overflow: auto">{{elem}}</div></td>
                 {% endfor %}
+                <td>
+                        <input type="radio" id="up" name="vote" value="up"><span class="glyphicon glyphicon-thumbs-up"></span></input>
+                        <input type="radio" id="down" name="vote" value="down"><span class="glyphicon glyphicon-thumbs-down"></span></input>
+                        <div>
+                          {% if error %}
+                          <p style="color:red">{{error}}</p>
+                          {% endif%}
+                        </div>
+
+                        <button class="btn btn-primary btn-sm" type="submit">Submit</button>
+                        
+                        <!-- <button type="button" class="btn btn-primary" data-toggle="button" name="up" aria-pressed="false" autocomplete="off"><span class="glyphicon glyphicon-thumbs-up"></span></button>
+                        <button type="button" class="btn btn-danger" data-toggle="button" name="down" aria-pressed="false" autocomplete="off"><span class="glyphicon glyphicon-thumbs-down"></span></button> -->
+                    </form>
+                </td>
             </tr>
             {% endfor %}
             {% endif %}
         </tbody>
     </table>
-
-
             </font>
         </div>
 </div>
+
+<script>
+  // $().button('toggle')
+  // function submitVote() {
+  // document.getElementById("form1").submit();}
+
+  // function buttonClickHandler() {
+  // $.post('/theroutehandler', { 'param1': 'some value', 'param2': 'some value' }, function(data) {
+  //   console.log(data)
+  // });
+  // }
+</script>
+
 {% endblock %}
