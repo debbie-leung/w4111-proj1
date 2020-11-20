@@ -26,7 +26,7 @@ Profile
             <li><a href="profile">Profile</a></li>
             <li><a href="/logout">Log Out</a></li>
           </ul>
-          <form method="POST" action="{{ url_for('loginsearch',uname=uname) }}"  class="navbar-form navbar-right">
+          <form method="POST" action="/{{uname}}/homesearch"  class="navbar-form navbar-right">
             <input  type="text" name="genusspecies" class="form-control" placeholder="Genus species">
             <input type="hidden" id="occh" name="occurrence" value="0"/>
             <input type="hidden" id="seqh" name="sequence" value="0"/>
@@ -67,7 +67,7 @@ Profile
                 <div class="form-group row">
                   <label for="password" class="col-sm-2 col-form-label">Password</label>
                   <div class="col-sm-10">
-                    <input type="text" class="form-control" placeholder="Enter new password" id="password" name="password">
+                    <input type="text" class="form-control" placeholder="Enter new password" id="password" name="password" maxlength="20">
                   </div>
                 </div>
                 <div class="form-group row">
@@ -82,13 +82,13 @@ Profile
                 <div class="form-group row">
                   <label for="department" class="col-sm-2 col-form-label">Department</label>
                   <div class="col-sm-10">
-                    <input type="text" class="form-control" placeholder="{{item[0]}}" id="department" name="department">
+                    <input type="text" class="form-control" placeholder="{{item[0]}}" id="department" name="department" maxlength="20">
                   </div>
                 </div>
                 <div class="form-group row">
                   <label for="lab" class="col-sm-2 col-form-label">Lab</label>
                   <div class="col-sm-10">
-                    <input type="text" class="form-control" placeholder="{{item[1]}}" id="lab" name="lab">
+                    <input type="text" class="form-control" placeholder="{{item[1]}}" id="lab" name="lab" maxlength="20">
                   </div>
                 </div>
                 {% endfor %}
@@ -98,7 +98,7 @@ Profile
                 <div class="form-group row">
                   <label for="division" class="col-sm-2 col-form-label">Division</label>
                   <div class="col-sm-10">
-                    <input type="text" class="form-control" placeholder="{{org_data[0][0]}}" id="division" name="division">
+                    <input type="text" class="form-control" placeholder="{{org_data[0][0]}}" id="division" name="division" maxlength="20">
                   </div>
                 </div>
                 {% endif %}
@@ -106,7 +106,7 @@ Profile
                 <div class="form-group row">
                   <label for="position" class="col-sm-2 col-form-label">Position</label>
                   <div class="col-sm-10">
-                    <input type="text" class="form-control" placeholder="{{item[4]}}" id="position" name="position">
+                    <input type="text" class="form-control" placeholder="{{item[4]}}" id="position" name="position" maxlength="20">
                   </div>
                 </div>
 
@@ -114,13 +114,13 @@ Profile
                 <div class="form-group row">
                   <label for="state" class="col-sm-2 col-form-label">State</label>
                   <div class="col-sm-10">
-                    <input type="text" class="form-control" placeholder="{{item[0]}}" id="state" name="state">
+                    <input type="text" class="form-control" placeholder="{{item[0]}}" id="state" name="state" maxlength="20">
                   </div>
                 </div>
                 <div class="form-group row">
                   <label for="zipcode" class="col-sm-2 col-form-label">Zipcode</label>
                   <div class="col-sm-10">
-                    <input type="text" class="form-control" placeholder="{{item[1]}}" id="zipcode" name="zipcode">
+                    <input type="number" class="form-control" placeholder="{{item[1]}}" id="zipcode" name="zipcode" min="9999" max="99999">
                   </div>
                 </div>
                 {% endfor %}
@@ -132,7 +132,12 @@ Profile
                   </div>
                 </div>
                 {% endfor %}
-                <input type="submit" value="Submit">
+                <div>
+        {% if error %}
+        <p style="color:red">{{error}}</p>
+        {% endif%}
+        </div>
+                <input type="submit" value="Update">
               </form>
 
             <!-- <input class="form-control" type="text" placeholder="Readonly input here…" readonly> -->

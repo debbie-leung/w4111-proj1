@@ -24,14 +24,19 @@
 </div>
 
 <form method="POST" action="/homesearch" class="form">
-  <h3 style="text-align:center">Search for an organism's sequence and occurrence: <input type="text" name="genusspecies" placeholder="genus species" required></h3>
+  <h3 style="text-align:center">Search for an organism's sequence and occurrence: <input type="text" name="genusspecies" placeholder="genus species" ></h3>
   <p style="text-align:center">
     <input type="checkbox" id="occ" name="occurrence" value="1"/> <label for="occurrence">Occurrence</label>
     <input type="hidden" id="occh" name="occurrence" value="0"/>
     <input type="checkbox" id="seq" name="sequence" value="1"/> <label for="sequence">Sequence</label> </p>
     <input type="hidden" id="seqh" name="sequence" value="0"/>
   <p style="text-align:center"><span class="glyphicon glyphicon-search"></span> <input type="submit" value="Search"></p>
-
 </form>
+
+<div style="text-align:center">
+        {% if error %}
+        <p style="color:red">{{error}}</p>
+        {% endif%}
+</div>
 
 {% endblock %}

@@ -30,7 +30,7 @@ Dashboard
             <li><a href="profile">Profile</a></li>
             <li><a href="/logout">Log Out</a></li>
           </ul>
-          <form method="POST" action="{{ url_for('loginsearch',uname=uname) }}"  class="navbar-form navbar-right">
+          <form method="POST" action="/{{uname}}/homesearch"  class="navbar-form navbar-right">
             <input  type="text" name="genusspecies" class="form-control" placeholder="Genus species">
             <input type="hidden" id="occh" name="occurrence" value="0"/>
             <input type="hidden" id="seqh" name="sequence" value="0"/>
@@ -53,115 +53,115 @@ Dashboard
               <div class="container-fluid">
                   <h3>Submit sequence or occurrence</h3>
                   <p>Please fill in the form to submit an organism's sequence and/or occurrence.</p>
-                  <form action="submit" class="form" method="POST">
+                  <form action="submit" class="form" method="POST" id="mainform">
                       
                       <div class="form-group">
                         <label for="kingdom">Kingdom</label>
-                        <input type="text" name="kingdom" class="form-control" id="kingdom">
+                        <input type="text" name="kingdom" class="form-control" id="kingdom" maxlength="20">
                       </div>
                       <div class="form-group">
                         <label for="phylum">Phylum</label>
-                        <input type="text" name="phylum" class="form-control" id="phylum">
+                        <input type="text" name="phylum" class="form-control" id="phylum" maxlength="20">
                       </div>
                       <div class="form-group">
                         <label for="org_class">Class</label>
-                        <input type="text" name="org_class" class="form-control" id="org_class">
+                        <input type="text" name="org_class" class="form-control" id="org_class" maxlength="20">
                       </div>
                       <div class="form-group">
                         <label for="order">Order</label>
-                        <input type="text" name="order" class="form-control" id="order">
+                        <input type="text" name="order" class="form-control" id="order" maxlength="20">
                       </div>
                       <div class="form-group">
                         <label for="family">Family</label>
-                        <input type="text" name="family" class="form-control" id="family">
+                        <input type="text" name="family" class="form-control" id="family" maxlength="20">
                       </div>
                       <div class="form-group">
                         <label for="genus">Genus</label>
-                        <input type="text" name="genus" class="form-control" id="genus">
+                        <input type="text" name="genus" class="form-control" id="genus" maxlength="20" required>
                       </div>
                       <div class="form-group">
                         <label for="species">Species</label>
-                        <input type="text" name="species" class="form-control" id="species">
+                        <input type="text" name="species" class="form-control" id="species" maxlength="20" required>
                       </div>
 
                       <div class="checkbox-group required">
                       <label for="seeSubmission">Submission Type</label>
-                      <label class="checkbox-inline"><input type="checkbox" id="sequence" name="sequence" value="1" onclick="seqFunction()">Sequence</label>                     
-                      <label class="checkbox-inline"><input type="checkbox" id="occurrence" name="occurrence" value="1" onclick="occFunction()">Occurrence</label>
+                      <label class="checkbox-inline"><input type="checkbox" class="typeselect" id="sequence" name="sequence" value="1" onclick="seqFunction()">Sequence</label>                     
+                      <label class="checkbox-inline"><input type="checkbox" class="typeselect" id="occurrence" name="occurrence" value="1" onclick="occFunction()">Occurrence</label>
                       </div>
 
                       <h3 id="text" style="display:none">For Sequence</h3>
 
                       <div class="form-group" id="seq_typeDiv">
                         <label for="seq_type">Type</label>
-                        <input type="text" name="seq_type" class="form-control" id="seq_type">
+                        <input type="text" name="seq_type" class="form-control" id="seq_type" maxlength="100">
                       </div>
 
                       <div class="form-group" id="bpDiv">
                         <label for="bp">Number of Base Pairs</label>
-                        <input type="text" name="bp" class="form-control" id="bp">
+                        <input type="number" name="bp" class="form-control" id="bp" min="11">
                       </div>
 
                       <div class="form-group" id="seqDiv">
                         <label for="seq">Sequence</label>
-                        <input type="text" name="seq" class="form-control" id="seq">
+                        <input type="text" name="seq" class="form-control" id="seq" maxlength="200000" minlength="10">
                       </div>
 
                       <div class="form-group" id="acc_noDiv">
                         <label for="acc_no">Accession Number</label>
-                        <input type="text" name="acc_no" class="form-control" id="acc_no">
+                        <input type="text" name="acc_no" class="form-control" id="acc_no" maxlength="20" required>
                       </div>
 
                       <div class="form-group" id="titleDiv">
                         <label for="title">Article Title</label>
-                        <input type="text" name="title" class="form-control" id="title">
+                        <input type="text" name="title" class="form-control" id="title" maxlength="500">
                       </div>
                       
                       <div class="form-group" id="doiDiv">
                         <label for="doi">DOI</label>
-                        <input type="text" name="doi" class="form-control" id="doi">
+                        <input type="text" name="doi" class="form-control" id="doi" maxlength="100" required>
                       </div>
                       
                       <div class="form-group" id="authorDiv">
                         <label for="author">Author(s)</label>
-                        <input type="text" name="author" class="form-control" id="author">
+                        <input type="text" name="author" class="form-control" id="author" maxlength="500">
                       </div>
                      
                       <div class="form-group" id="journalDiv">
                         <label for="journal">Journal</label>
-                        <input type="text" name="journal" class="form-control" id="journal">
+                        <input type="text" name="journal" class="form-control" id="journal" maxlength="100">
                       </div>
 
                       <div class="form-group" id="volumeDiv">
                         <label for="volume">Volume</label>
-                        <input type="text" name="volume" class="form-control" id="volume">
+                        <input type="number" name="volume" class="form-control" id="volume" min="1">
                       </div>
 
                       <div class="form-group" id="issueDiv">
                         <label for="issue">Issue</label>
-                        <input type="text" name="issue" class="form-control" id="issue">
+                        <input type="number" name="issue" class="form-control" id="issue" min="1">
                       </div>
 
                       <div class="form-group" id="journal_dateDiv">
                         <label for="journal_date">Journal Date</label>
-                        <input type="text" name="journal_date" class="form-control" id="journal_date">
+                        <input type="date" name="journal_date" class="form-control" id="journal_date">
                       </div>
 
                       <div class="form-group" id="page_fromDiv">
                         <label for="page_from">Page From</label>
-                        <input type="text" name="page_from" class="form-control" id="page_from">
+                        <input type="number" name="page_from" class="form-control" id="page_from" min="1">
                       </div>
 
                       <div class="form-group" id="page_toDiv">
                         <label for="page_to">Page To</label>
-                        <input type="text" name="page_to" class="form-control" id="page_to">
+                        <input type="text" name="page_to" class="form-control" id="page_to" min="1">
                       </div>
 
                       <h3 id="text2" style="display:none">For Occurrence</h3>
 
                       <div class="form-group" id="timeDiv">
                         <label for="time">Time</label>
-                        <input type="text" name="time" class="form-control" id="time">
+                        <input type="datetime-local" name="time" class="form-control" id="time" required>
                       </div>
 
                       <div class="form-group" id="occ_typeDiv">
@@ -184,12 +184,16 @@ Dashboard
 
                       <div class="form-group" id="latitudeDiv">
                         <label for="latitude">Latitude</label>
-                        <input type="text" name="latitude" class="form-control" id="latitude">
+                        <input type="number" name="latitude" class="form-control" id="latitude" step="any" min="-90" max="90" required>
                       </div>
 
                       <div class="form-group" id="longitudeDiv">
                         <label for="longitude">Longitude</label>
-                        <input type="text" name="longitude" class="form-control" id="longitude">
+                        <input type="number" name="longitude" class="form-control" id="longitude" step="any" min="-180" max="180" required>
+                      </div>
+
+                      <div>
+                        <p id="err" style="color:red"></p>
                       </div>
 
                       <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
@@ -291,6 +295,17 @@ Dashboard
     }
   }
 
+  jQuery(function ($) {
+    //form submit handler
+    $('#mainform').submit(function (e) {
+        //check atleat 1 checkbox is checked
+        if (!$('.typeselect').is(':checked')) {
+            //prevent the default form submit if it is not checked
+            e.preventDefault();
+            document.getElementById("err").innerHTML = "Please select at least one submission type."
+        }
+    })
+  })
   // $('div.checkbox-group.required :checkbox:checked').length > 0
   
   </script>
