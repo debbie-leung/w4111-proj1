@@ -1,4 +1,4 @@
-README file for Databases Project 3
+README file for Databases Project 1
 
 PostgreSQL account name: dsl2162
 
