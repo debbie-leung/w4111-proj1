@@ -1,7 +1,5 @@
 README file for Databases Project 1
 
-PostgreSQL account name: dsl2162
-
 Implementation details: We basically implemented all the parts in our initial proposal. There were three main categories in our ER diagram. In the user category, we let user to enter their personal information, which is realized by sign up section in our website. The website allows users to update their personal information on profile section. The user can either submit an occurrence or a sequence to the database which is implemented in the submit section of the dashboard. Also, the user can access to her or his access history, which can be shown by the history section of the dashboard. The forth function that a user can do is to vote sequence. The second category of our ER diagram is Sequence category. We implemented a search engine for loggedin and unloggedin users. There are two options for the search engine: a simple engine that takes genus and species and a advance search that gives various options for user to choose. The third category is the occurrence category. The user can submit occurence in the submit section and search for occurrence in advance search. The reference table is shown along with the sequence information.
 
 Two example web pages:
