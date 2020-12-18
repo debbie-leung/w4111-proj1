@@ -1,0 +1,42 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">GenBio</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li class="active">
+      <li><a href="/">Home</a></li>
+      <li><a href="advancesearch"><span class="glyphicon glyphicon-search"></span> Advance Search</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+      <li><a href="registration"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+      <li><a href="login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="jumbotron text-center">
+  <h1>Welcome to GenBio Database</h1>
+  <p>A Centralized Database for Animal Genomics and Biodiversity Information</p>
+</div>
+
+<form method="POST" action="/homesearch" class="form">
+  <h3 style="text-align:center">Search for an organism's sequence and occurrence: <input type="text" name="genusspecies" placeholder="genus species" ></h3>
+  <p style="text-align:center">
+    <input type="checkbox" id="occ" name="occurrence" value="1"/> <label for="occurrence">Occurrence</label>
+    <input type="hidden" id="occh" name="occurrence" value="0"/>
+    <input type="checkbox" id="seq" name="sequence" value="1"/> <label for="sequence">Sequence</label> </p>
+    <input type="hidden" id="seqh" name="sequence" value="0"/>
+  <p style="text-align:center"><span class="glyphicon glyphicon-search"></span> <input type="submit" value="Search"></p>
+</form>
+
+<div style="text-align:center">
+        {% if error %}
+        <p style="color:red">{{error}}</p>
+        {% endif%}
+</div>
+
+{% endblock %}
